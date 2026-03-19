@@ -1,65 +1,71 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Prediction - Heri Sanjaya</title>
+    <title>QR Prediction Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
 <body class="bg-white min-h-screen flex flex-col items-center justify-center p-6 text-slate-900">
 
-    <div class="w-full max-w-xs space-y-10">
+    <div class="w-full max-w-xs space-y-8">
         <header class="text-center">
-            <h1 class="text-[10px] font-semibold tracking-[0.2em] uppercase text-slate-300">Simple QR Prediction</h1>
+            <h1 class="text-[10px] font-bold tracking-[0.25em] uppercase text-slate-300">Simple QR Prediction</h1>
         </header>
 
         <div class="space-y-6">
-            <!-- Input Teks -->
-            <div class="space-y-2">
-                <input 
-                    type="text" 
-                    id="prediction-input" 
-                    placeholder="Ketik prediksi..." 
-                    class="w-full bg-slate-50 border-none px-4 py-3 rounded-xl focus:ring-2 focus:ring-slate-100 outline-none transition-all text-center text-sm font-medium"
-                >
-            </div>
+            <!-- Input Field -->
+            <input 
+                type="text" 
+                id="prediction-input" 
+                placeholder="Prediction text..." 
+                class="w-full bg-slate-50 border-none px-4 py-4 rounded-xl focus:ring-2 focus:ring-slate-100 outline-none text-center text-sm font-semibold"
+            >
 
-            <!-- Pilihan Situs -->
+            <!-- Site Selection -->
             <div class="space-y-3">
-                <p class="text-[10px] text-center font-semibold uppercase tracking-widest text-slate-400">Reveal Site</p>
+                <p class="text-[9px] text-center font-bold uppercase tracking-widest text-slate-400">Target Site</p>
                 <div class="flex gap-2">
-                    <button data-site="google" class="site-btn flex-1 py-2 text-[11px] font-medium rounded-lg bg-slate-50 text-slate-400 border border-transparent transition-all hover:bg-slate-100">Google</button>
-                    <button data-site="tokopedia" class="site-btn flex-1 py-2 text-[11px] font-medium rounded-lg bg-slate-50 text-slate-400 border border-transparent transition-all hover:bg-slate-100">Tokopedia</button>
-                    <button data-site="imdb" class="site-btn flex-1 py-2 text-[11px] font-medium rounded-lg bg-slate-50 text-slate-400 border border-transparent transition-all hover:bg-slate-100">IMDb</button>
+                    <button data-site="google" class="site-btn flex-1 py-2.5 text-[10px] font-bold rounded-lg transition-none">GOOGLE</button>
+                    <button data-site="tokopedia" class="site-btn flex-1 py-2.5 text-[10px] font-bold rounded-lg transition-none">TOKOPEDIA</button>
+                    <button data-site="imdb" class="site-btn flex-1 py-2.5 text-[10px] font-bold rounded-lg transition-none">IMDb</button>
                 </div>
             </div>
 
+            <!-- Submit Button -->
             <button 
                 id="submit-btn" 
                 disabled
-                class="w-full bg-slate-900 text-white py-4 rounded-xl font-semibold text-sm hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-300 transition-all active:scale-95 shadow-lg shadow-slate-100"
+                class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-xs uppercase tracking-widest disabled:bg-slate-100 disabled:text-slate-300 active:scale-95 transition-all"
             >
-                Update Database
+                Submit
             </button>
         </div>
 
-        <!-- Live Status Display -->
-        <div class="pt-8 border-t border-slate-50 text-center">
-            <div id="live-display" class="space-y-1">
-                <p id="live-value" class="text-base font-medium text-slate-800 italic">...</p>
-                <p id="live-site" class="text-[9px] font-bold text-blue-400 uppercase tracking-tighter">-</p>
+        <!-- Target QR Display -->
+        <div class="pt-8 border-t border-slate-50 text-center space-y-4">
+            <p class="text-[9px] text-slate-300 font-bold uppercase tracking-widest">Your Target QR Code</p>
+            <div class="flex flex-col items-center gap-4">
+                <div class="p-2 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                    <img id="target-qr-img" class="w-32 h-32" alt="QR Code">
+                </div>
+                <button id="download-qr" class="text-[10px] font-bold text-blue-500 hover:text-blue-700 uppercase tracking-tight underline">
+                    Download QR to Device
+                </button>
             </div>
+        </div>
+
+        <div class="text-center">
+            <p id="live-status" class="text-[10px] font-medium text-slate-300 italic">Syncing with database...</p>
         </div>
     </div>
 
-    <!-- Minimalist Debug Console (Bottom Strip) -->
-    <div id="debug-log" class="fixed bottom-0 left-0 right-0 h-12 bg-slate-50/50 backdrop-blur-sm border-t border-slate-100 overflow-hidden px-4 py-3 font-mono text-[8px] text-slate-400 flex flex-col-reverse pointer-events-none">
-        <div>[System] Ready.</div>
-    </div>
+    <!-- Hidden Debug Console (Very Minimal) -->
+    <div id="debug-log" class="fixed bottom-0 left-0 right-0 h-8 bg-slate-50/30 px-4 py-2 font-mono text-[8px] text-slate-300 overflow-hidden pointer-events-none"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -82,74 +88,84 @@
 
         const input = document.getElementById('prediction-input');
         const submitBtn = document.getElementById('submit-btn');
-        const debugLog = document.getElementById('debug-log');
-        const liveValue = document.getElementById('live-value');
-        const liveSite = document.getElementById('live-site');
         const siteBtns = document.querySelectorAll('.site-btn');
+        const liveStatus = document.getElementById('live-status');
+        const qrImg = document.getElementById('target-qr-img');
+        const downloadBtn = document.getElementById('download-qr');
 
         let selectedSite = 'google';
+        const targetUrl = "https://myqronline.vercel.app/redirect.html";
 
-        function log(msg) {
-            const div = document.createElement('div');
-            div.textContent = `> ${msg}`;
-            debugLog.prepend(div);
+        // Generate Target QR on load
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(targetUrl)}`;
+
+        // Site selection logic (Instant highlight, no hover)
+        function updateSiteUI(site) {
+            selectedSite = site;
+            siteBtns.forEach(btn => {
+                if (btn.getAttribute('data-site') === site) {
+                    btn.className = "site-btn flex-1 py-2.5 text-[10px] font-bold rounded-lg bg-slate-900 text-white transition-none";
+                } else {
+                    btn.className = "site-btn flex-1 py-2.5 text-[10px] font-bold rounded-lg bg-slate-50 text-slate-400 transition-none";
+                }
+            });
         }
 
-        // Handle Site Selection UI
         siteBtns.forEach(btn => {
-            btn.onclick = () => {
-                siteBtns.forEach(b => {
-                    b.classList.remove('bg-slate-900', 'text-white', 'border-slate-900');
-                    b.classList.add('bg-slate-50', 'text-slate-400');
-                });
-                btn.classList.remove('bg-slate-50', 'text-slate-400');
-                btn.classList.add('bg-slate-900', 'text-white');
-                selectedSite = btn.getAttribute('data-site');
-                log(`Selected: ${selectedSite}`);
-            };
+            btn.onclick = () => updateSiteUI(btn.getAttribute('data-site'));
         });
 
         // Default selection
-        siteBtns[0].click();
+        updateSiteUI('google');
 
-        signInAnonymously(auth).catch(e => log("Auth err: " + e.message));
-
+        // Auth
+        signInAnonymously(auth);
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 submitBtn.disabled = false;
-                log("DB Connected.");
-
-                // Listen both paths
                 onValue(ref(db, 'predictions/input'), (snap) => {
-                    liveValue.textContent = snap.val() || "-";
-                });
-                onValue(ref(db, 'predictions/site'), (snap) => {
-                    liveSite.textContent = snap.val() ? `@${snap.val()}` : "-";
+                    liveStatus.textContent = `Current: "${snap.val() || '-'}"`;
                 });
             }
         });
 
+        // Submit Logic
         submitBtn.onclick = async () => {
             const val = input.value.trim();
             if (!val) return;
 
             submitBtn.disabled = true;
-            submitBtn.textContent = "Updating...";
+            submitBtn.textContent = "...";
 
             try {
-                // Set path masing-masing agar bersih
                 await Promise.all([
                     set(ref(db, 'predictions/input'), val),
                     set(ref(db, 'predictions/site'), selectedSite)
                 ]);
-                
                 input.value = "";
-                log("DB Updated.");
             } catch (e) {
-                log("Err: " + e.message);
+                console.error(e);
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = "Update Database";
+                submitBtn.textContent = "Submit";
+            }
+        };
+
+        // Download QR Logic
+        downloadBtn.onclick = async () => {
+            try {
+                const response = await fetch(qrImg.src);
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'target-qr-myqronline.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } catch (err) {
+                // Fallback for some browsers
+                window.open(qrImg.src, '_blank');
             }
         };
     </script>
