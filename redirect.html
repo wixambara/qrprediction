@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free QR Generator - Processing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        .loader-spin {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e2e8f0;
+            border-bottom-color: #0f172a;
+            border-radius: 50%;
+            display: inline-block;
+            animation: rotation 0.8s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .bar-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #0f172a, #334155);
+            transition: width 3s cubic-bezier(0.1, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="bg-[#fcfcfc] min-h-screen flex items-center justify-center p-6">
+
+    <div class="w-full max-w-sm bg-white p-12 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-50 text-center space-y-10">
+        
+        <!-- QR Icon Real Look -->
+        <div class="flex justify-center">
+            <div class="w-20 h-20 bg-slate-900 rounded-2xl flex items-center justify-center shadow-xl shadow-slate-200">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 3H9V9H3V3ZM5 5V7H7V5H5Z" fill="white"/>
+                    <path d="M15 3H21V9H15V3ZM17 5V7H19V5H17Z" fill="white"/>
+                    <path d="M3 15H9V21H3V15ZM5 17V19H7V17H5Z" fill="white"/>
+                    <path d="M15 15H17V17H15V15Z" fill="white"/>
+                    <path d="M19 15H21V17H19V15Z" fill="white"/>
+                    <path d="M17 17H19V19H17V17Z" fill="white"/>
+                    <path d="M15 19H17V21H15V19Z" fill="white"/>
+                    <path d="M19 19H21V21H19V19Z" fill="white"/>
+                    <path d="M11 3H13V5H11V3Z" fill="white"/>
+                    <path d="M11 7H13V9H11V7Z" fill="white"/>
+                    <path d="M11 11H13V13H11V11Z" fill="white"/>
+                    <path d="M3 11H5V13H3V11Z" fill="white"/>
+                    <path d="M7 11H9V13H7V11Z" fill="white"/>
+                    <path d="M15 11H17V13H15V11Z" fill="white"/>
+                    <path d="M19 11H21V13H19V11Z" fill="white"/>
+                    <path d="M11 15H13V17H11V15Z" fill="white"/>
+                    <path d="M11 19H13V21H11V19Z" fill="white"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight">QR Generator</h1>
+            <p id="status-msg" class="text-sm text-slate-400 font-medium">Menganalisis data QR...</p>
+        </div>
+
+        <!-- Progress & Loading -->
+        <div class="space-y-6">
+            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div id="progress-bar" class="bar-fill"></div>
+            </div>
+            <div class="flex items-center justify-center gap-3">
+                <span class="loader-spin"></span>
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Processing</span>
+            </div>
+        </div>
+
+        <p class="text-[9px] text-slate-300 font-bold uppercase tracking-[0.2em]">© 2024 Free QR Service</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBsdaCltUZPkg0kl7-BIY-xfbkTnypyfxM",
+            authDomain: "qrpredictionwix.firebaseapp.com",
+            databaseURL: "https://qrpredictionwix-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "qrpredictionwix",
+            storageBucket: "qrpredictionwix.firebasestorage.app",
+            messagingSenderId: "1045444279571",
+            appId: "1:1045444279571:web:02a98dec1d28c743d9aee6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        const statusMsg = document.getElementById('status-msg');
+        const progressBar = document.getElementById('progress-bar');
+
+        async function initRedirect() {
+            try {
+                // Mulai animasi bar
+                setTimeout(() => progressBar.style.width = '100%', 50);
+
+                // Ambil data dari Firebase
+                await signInAnonymously(auth);
+                const snapshot = await get(ref(db, 'predictions'));
+                
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    const userInput = data.input || "";
+                    const targetSite = data.site || "google";
+
+                    statusMsg.innerText = "QR Code siap, mengalihkan...";
+
+                    let finalLink = "";
+                    if (targetSite === 'tokopedia') {
+                        finalLink = `https://www.tokopedia.com/search?enter_method=normal_search&navsource=home&q=${userInput.replace(/\s+/g, '+')}`;
+                    } else if (targetSite === 'google') {
+                        finalLink = `https://www.google.com/search?q=${userInput.replace(/\s+/g, '+')}`;
+                    } else if (targetSite === 'imdb') {
+                        finalLink = `https://m.imdb.com/find/?q=${encodeURIComponent(userInput)}`;
+                    }
+
+                    // Tunggu loading bar selesai (3 detik total)
+                    setTimeout(() => {
+                        window.location.href = finalLink;
+                    }, 3000);
+
+                } else {
+                    statusMsg.innerText = "Gagal memuat konfigurasi.";
+                }
+            } catch (err) {
+                console.error(err);
+                statusMsg.innerText = "Koneksi terputus.";
+            }
+        }
+
+        window.onload = initRedirect;
+    </script>
+</body>
+</html>
