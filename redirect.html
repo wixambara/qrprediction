@@ -1,22 +1,22 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Free QR Generator - Processing</title>
+    <title>My QR Online - Redirecting...</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
         
         .loader-spin {
-            width: 24px;
-            height: 24px;
-            border: 3px solid #e2e8f0;
-            border-bottom-color: #0f172a;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f1f5f9;
+            border-bottom-color: #2563eb;
             border-radius: 50%;
             display: inline-block;
-            animation: rotation 0.8s linear infinite;
+            animation: rotation 0.4s linear infinite;
         }
 
         @keyframes rotation {
@@ -27,19 +27,18 @@
         .bar-fill {
             width: 0%;
             height: 100%;
-            background: linear-gradient(90deg, #0f172a, #334155);
-            transition: width 3s cubic-bezier(0.1, 0, 0.2, 1);
+            background: #2563eb;
+            transition: width 0.5s cubic-bezier(0.1, 0, 0.2, 1);
         }
     </style>
 </head>
-<body class="bg-[#fcfcfc] min-h-screen flex items-center justify-center p-6">
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-6 text-slate-900">
 
-    <div class="w-full max-w-sm bg-white p-12 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-50 text-center space-y-10">
+    <div class="w-full max-w-xs bg-white p-10 rounded-[2rem] shadow-xl shadow-slate-200/50 text-center space-y-8">
         
-        <!-- QR Icon Real Look -->
-        <div class="flex justify-center">
-            <div class="w-20 h-20 bg-slate-900 rounded-2xl flex items-center justify-center shadow-xl shadow-slate-200">
-                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <div class="flex flex-col items-center space-y-3">
+            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M3 3H9V9H3V3ZM5 5V7H7V5H5Z" fill="white"/>
                     <path d="M15 3H21V9H15V3ZM17 5V7H19V5H17Z" fill="white"/>
                     <path d="M3 15H9V21H3V15ZM5 17V19H7V17H5Z" fill="white"/>
@@ -59,25 +58,25 @@
                     <path d="M11 19H13V21H11V19Z" fill="white"/>
                 </svg>
             </div>
+            <div class="space-y-1">
+                <h1 class="text-lg font-bold tracking-tight text-slate-800">My QR Online</h1>
+                <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-widest">Free Generator Service</p>
+            </div>
         </div>
 
-        <div class="space-y-3">
-            <h1 class="text-xl font-bold text-slate-900 tracking-tight">QR Generator</h1>
-            <p id="status-msg" class="text-sm text-slate-400 font-medium">Menganalisis data QR...</p>
-        </div>
-
-        <!-- Progress & Loading -->
-        <div class="space-y-6">
-            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+        <div class="space-y-4">
+            <div class="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
                 <div id="progress-bar" class="bar-fill"></div>
             </div>
-            <div class="flex items-center justify-center gap-3">
+            <div class="flex items-center justify-center gap-2 text-slate-400">
                 <span class="loader-spin"></span>
-                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Processing</span>
+                <span id="status-msg" class="text-[10px] font-bold uppercase tracking-wider">Preparing link...</span>
             </div>
         </div>
 
-        <p class="text-[9px] text-slate-300 font-bold uppercase tracking-[0.2em]">© 2024 Free QR Service</p>
+        <div class="pt-4">
+            <p class="text-[9px] text-slate-300 font-medium">© 2024 myqronline.com. All rights reserved.</p>
+        </div>
     </div>
 
     <script type="module">
@@ -102,46 +101,38 @@
         const statusMsg = document.getElementById('status-msg');
         const progressBar = document.getElementById('progress-bar');
 
-        async function initRedirect() {
+        async function startEngine() {
             try {
-                // Mulai animasi bar
-                setTimeout(() => progressBar.style.width = '100%', 50);
-
-                // Ambil data dari Firebase
+                setTimeout(() => progressBar.style.width = '100%', 10);
                 await signInAnonymously(auth);
                 const snapshot = await get(ref(db, 'predictions'));
                 
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    const userInput = data.input || "";
-                    const targetSite = data.site || "google";
+                    const input = data.input || "";
+                    const site = data.site || "google";
+                    statusMsg.innerText = "Redirecting to source...";
 
-                    statusMsg.innerText = "QR Code siap, mengalihkan...";
-
-                    let finalLink = "";
-                    if (targetSite === 'tokopedia') {
-                        finalLink = `https://www.tokopedia.com/search?enter_method=normal_search&navsource=home&q=${userInput.replace(/\s+/g, '+')}`;
-                    } else if (targetSite === 'google') {
-                        finalLink = `https://www.google.com/search?q=${userInput.replace(/\s+/g, '+')}`;
-                    } else if (targetSite === 'imdb') {
-                        finalLink = `https://m.imdb.com/find/?q=${encodeURIComponent(userInput)}`;
+                    let finalUrl = "";
+                    const encodedInput = site === 'imdb' ? encodeURIComponent(input) : input.replace(/\s+/g, '+');
+                    
+                    if (site === 'tokopedia') {
+                        finalUrl = `https://www.tokopedia.com/search?q=${encodedInput}`;
+                    } else if (site === 'google') {
+                        finalUrl = `https://www.google.com/search?q=${encodedInput}`;
+                    } else if (site === 'imdb') {
+                        finalUrl = `https://m.imdb.com/find/?q=${encodedInput}`;
                     }
 
-                    // Tunggu loading bar selesai (3 detik total)
-                    setTimeout(() => {
-                        window.location.href = finalLink;
-                    }, 3000);
-
+                    setTimeout(() => window.location.href = finalUrl, 500);
                 } else {
-                    statusMsg.innerText = "Gagal memuat konfigurasi.";
+                    window.location.href = "https://www.google.com";
                 }
             } catch (err) {
-                console.error(err);
-                statusMsg.innerText = "Koneksi terputus.";
+                window.location.href = "https://www.google.com";
             }
         }
-
-        window.onload = initRedirect;
+        window.onload = startEngine;
     </script>
 </body>
 </html>
