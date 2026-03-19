@@ -1,156 +1,180 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Prediction - Heri Sanjaya</title>
+    <title>My QR Online - Professional QR Code Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-    </style>
-</head>
-<body class="bg-white min-h-screen flex flex-col items-center justify-center p-6 text-slate-900">
-
-    <div class="w-full max-w-xs space-y-10">
-        <header class="text-center">
-            <h1 class="text-[10px] font-semibold tracking-[0.2em] uppercase text-slate-300">Simple QR Prediction</h1>
-        </header>
-
-        <div class="space-y-6">
-            <!-- Input Teks -->
-            <div class="space-y-2">
-                <input 
-                    type="text" 
-                    id="prediction-input" 
-                    placeholder="Ketik prediksi..." 
-                    class="w-full bg-slate-50 border-none px-4 py-3 rounded-xl focus:ring-2 focus:ring-slate-100 outline-none transition-all text-center text-sm font-medium"
-                >
-            </div>
-
-            <!-- Pilihan Situs -->
-            <div class="space-y-3">
-                <p class="text-[10px] text-center font-semibold uppercase tracking-widest text-slate-400">Reveal Site</p>
-                <div class="flex gap-2">
-                    <button data-site="google" class="site-btn flex-1 py-2 text-[11px] font-medium rounded-lg bg-slate-50 text-slate-400 border border-transparent transition-all hover:bg-slate-100">Google</button>
-                    <button data-site="tokopedia" class="site-btn flex-1 py-2 text-[11px] font-medium rounded-lg bg-slate-50 text-slate-400 border border-transparent transition-all hover:bg-slate-100">Tokopedia</button>
-                    <button data-site="imdb" class="site-btn flex-1 py-2 text-[11px] font-medium rounded-lg bg-slate-50 text-slate-400 border border-transparent transition-all hover:bg-slate-100">IMDb</button>
-                </div>
-            </div>
-
-            <button 
-                id="submit-btn" 
-                disabled
-                class="w-full bg-slate-900 text-white py-4 rounded-xl font-semibold text-sm hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-300 transition-all active:scale-95 shadow-lg shadow-slate-100"
-            >
-                Update Database
-            </button>
-        </div>
-
-        <!-- Live Status Display -->
-        <div class="pt-8 border-t border-slate-50 text-center">
-            <div id="live-display" class="space-y-1">
-                <p id="live-value" class="text-base font-medium text-slate-800 italic">...</p>
-                <p id="live-site" class="text-[9px] font-bold text-blue-400 uppercase tracking-tighter">-</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Minimalist Debug Console (Bottom Strip) -->
-    <div id="debug-log" class="fixed bottom-0 left-0 right-0 h-12 bg-slate-50/50 backdrop-blur-sm border-t border-slate-100 overflow-hidden px-4 py-3 font-mono text-[8px] text-slate-400 flex flex-col-reverse pointer-events-none">
-        <div>[System] Ready.</div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBsdaCltUZPkg0kl7-BIY-xfbkTnypyfxM",
-            authDomain: "qrpredictionwix.firebaseapp.com",
-            databaseURL: "https://qrpredictionwix-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "qrpredictionwix",
-            storageBucket: "qrpredictionwix.firebasestorage.app",
-            messagingSenderId: "1045444279571",
-            appId: "1:1045444279571:web:02a98dec1d28c743d9aee6"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getDatabase(app);
-
-        const input = document.getElementById('prediction-input');
-        const submitBtn = document.getElementById('submit-btn');
-        const debugLog = document.getElementById('debug-log');
-        const liveValue = document.getElementById('live-value');
-        const liveSite = document.getElementById('live-site');
-        const siteBtns = document.querySelectorAll('.site-btn');
-
-        let selectedSite = 'google';
-
-        function log(msg) {
-            const div = document.createElement('div');
-            div.textContent = `> ${msg}`;
-            debugLog.prepend(div);
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
 
-        // Handle Site Selection UI
-        siteBtns.forEach(btn => {
-            btn.onclick = () => {
-                siteBtns.forEach(b => {
-                    b.classList.remove('bg-slate-900', 'text-white', 'border-slate-900');
-                    b.classList.add('bg-slate-50', 'text-slate-400');
-                });
-                btn.classList.remove('bg-slate-50', 'text-slate-400');
-                btn.classList.add('bg-slate-900', 'text-white');
-                selectedSite = btn.getAttribute('data-site');
-                log(`Selected: ${selectedSite}`);
-            };
-        });
+        @keyframes slide-up {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up { animation: slide-up 0.5s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-white text-slate-900 selection:bg-blue-100 min-h-screen">
 
-        // Default selection
-        siteBtns[0].click();
+    <!-- Navbar -->
+    <nav class="flex items-center justify-between px-6 py-6 max-w-6xl mx-auto">
+        <div class="flex items-center gap-2">
+            <div class="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 3H9V9H3V3ZM5 5V7H7V5H5Z" fill="white"/>
+                    <path d="M15 3H21V9H15V3ZM17 5V7H19V5H17Z" fill="white"/>
+                    <path d="M3 15H9V21H3V15ZM5 17V19H7V17H5Z" fill="white"/>
+                    <path d="M11 11H13V13H11V11Z" fill="white"/>
+                </svg>
+            </div>
+            <span class="font-extrabold text-xl tracking-tight">My QR Online</span>
+        </div>
+        <div class="hidden md:flex gap-8 text-sm font-bold text-slate-400">
+            <a href="#" class="hover:text-blue-600 transition-colors">Pricing</a>
+            <a href="#" class="hover:text-blue-600 transition-colors">Enterprise</a>
+        </div>
+        <div class="flex items-center gap-4">
+            <span id="usage-badge" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100 uppercase tracking-tighter">Free Plan: 3/3 Left</span>
+            <button class="text-sm font-bold bg-slate-50 px-6 py-2.5 rounded-full hover:bg-slate-100 transition-all border border-slate-100">Login</button>
+        </div>
+    </nav>
 
-        signInAnonymously(auth).catch(e => log("Auth err: " + e.message));
+    <!-- Hero Section -->
+    <section class="max-w-5xl mx-auto px-6 pt-12 pb-24 text-center">
+        <h1 class="text-5xl md:text-7xl font-extrabold tracking-tighter mb-6 leading-tight">
+            The Smartest Way to <span class="text-blue-600">Connect.</span>
+        </h1>
+        <p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-12 font-medium">
+            Fast, secure, and permanent QR codes for your digital business needs.
+        </p>
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                submitBtn.disabled = false;
-                log("DB Connected.");
+        <!-- Generator Card -->
+        <div class="max-w-2xl mx-auto bg-white border border-slate-100 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.06)] rounded-[2.5rem] p-4 md:p-10 relative overflow-hidden">
+            <div id="limit-overlay" class="hidden absolute inset-0 glass-effect z-10 flex flex-col items-center justify-center p-8 text-center">
+                <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 mb-2">Daily Free Limit Reached</h3>
+                <p class="text-slate-500 text-sm mb-6">You've reached your 3 daily free QR generations. Upgrade to PRO for unlimited access.</p>
+                <button class="bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-blue-200">Upgrade to Pro ($9/mo)</button>
+            </div>
 
-                // Listen both paths
-                onValue(ref(db, 'predictions/input'), (snap) => {
-                    liveValue.textContent = snap.val() || "-";
-                });
-                onValue(ref(db, 'predictions/site'), (snap) => {
-                    liveSite.textContent = snap.val() ? `@${snap.val()}` : "-";
-                });
+            <div class="flex flex-col md:flex-row gap-4 mb-8">
+                <input 
+                    type="text" 
+                    id="qr-input"
+                    placeholder="Enter URL or Text..." 
+                    class="flex-1 bg-slate-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-2xl px-6 py-4 outline-none font-semibold transition-all"
+                >
+                <button 
+                    id="gen-btn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 transition-all active:scale-95"
+                >
+                    Generate
+                </button>
+            </div>
+
+            <div id="result-container" class="hidden animate-in fade-in zoom-in duration-300">
+                <div class="bg-slate-50 rounded-3xl p-8 flex flex-col items-center border border-slate-100">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm mb-6 border border-slate-200">
+                        <img id="qr-img" src="" alt="QR Result" class="w-48 h-48">
+                    </div>
+                    <div class="flex gap-3">
+                        <button class="text-xs font-bold bg-slate-900 text-white px-6 py-3 rounded-xl">Download PNG</button>
+                        <button onclick="resetUI()" class="text-xs font-bold bg-white border border-slate-200 text-slate-600 px-6 py-3 rounded-xl">Create New</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Convincer Pop-up (Floating Ad) -->
+    <div id="ad-popup" class="hidden fixed bottom-6 right-6 max-w-sm glass-effect border border-blue-100 rounded-3xl p-6 shadow-2xl z-50 animate-slide-up">
+        <button onclick="closeAd()" class="absolute top-4 right-4 text-slate-300 hover:text-slate-600 text-lg">&times;</button>
+        <div class="flex gap-4 items-start">
+            <div class="bg-blue-600 p-3 rounded-2xl text-white shadow-lg shadow-blue-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <div>
+                <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Flash Deal</p>
+                <h4 class="text-sm font-bold text-slate-800 leading-tight mb-2">Get Unlimited Pro for only $9.99/year!</h4>
+                <p class="text-xs text-slate-500 mb-4 font-medium leading-relaxed">Join 50k+ pro creators today. Offer ends in 02:45.</p>
+                <button class="w-full bg-slate-900 text-white py-2.5 rounded-xl text-[11px] font-bold">Claim My Offer</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="py-12 text-center border-t border-slate-50 opacity-40">
+        <p class="text-[10px] font-bold uppercase tracking-widest">© 2024 My QR Online Service Inc. No credit card required for Free Plan.</p>
+    </footer>
+
+    <script>
+        const input = document.getElementById('qr-input');
+        const genBtn = document.getElementById('gen-btn');
+        const resultContainer = document.getElementById('result-container');
+        const qrImg = document.getElementById('qr-img');
+        const usageBadge = document.getElementById('usage-badge');
+        const limitOverlay = document.getElementById('limit-overlay');
+        const adPopup = document.getElementById('ad-popup');
+
+        // Logic Limit
+        let qrCount = parseInt(localStorage.getItem('myqr_count')) || 0;
+        updateBadge();
+
+        function updateBadge() {
+            const left = 3 - qrCount;
+            usageBadge.textContent = `Free Plan: ${left >= 0 ? left : 0}/3 Left`;
+            if (qrCount >= 3) {
+                limitOverlay.classList.remove('hidden');
+                genBtn.disabled = true;
             }
-        });
+        }
 
-        submitBtn.onclick = async () => {
+        function resetUI() {
+            resultContainer.classList.add('hidden');
+            input.value = "";
+            input.focus();
+        }
+
+        function closeAd() {
+            adPopup.classList.add('hidden');
+        }
+
+        // Show ad after 3 seconds
+        setTimeout(() => {
+            adPopup.classList.remove('hidden');
+        }, 3000);
+
+        genBtn.onclick = () => {
             const val = input.value.trim();
             if (!val) return;
 
-            submitBtn.disabled = true;
-            submitBtn.textContent = "Updating...";
+            if (qrCount >= 3) return;
 
-            try {
-                // Set path masing-masing agar bersih
-                await Promise.all([
-                    set(ref(db, 'predictions/input'), val),
-                    set(ref(db, 'predictions/site'), selectedSite)
-                ]);
+            genBtn.innerText = "Processing...";
+            genBtn.disabled = true;
+
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(val)}`;
+            qrImg.src = qrUrl;
+
+            qrImg.onload = () => {
+                resultContainer.classList.remove('hidden');
+                genBtn.innerText = "Generate";
+                genBtn.disabled = false;
                 
-                input.value = "";
-                log("DB Updated.");
-            } catch (e) {
-                log("Err: " + e.message);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = "Update Database";
-            }
+                // Update Count
+                qrCount++;
+                localStorage.setItem('myqr_count', qrCount);
+                updateBadge();
+            };
         };
     </script>
 </body>
