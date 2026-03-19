@@ -6,42 +6,59 @@
     <title>QR Prediction - Minimalist</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
         body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
 <body class="bg-white min-h-screen flex flex-col items-center justify-center p-6 text-slate-900">
 
-    <div class="w-full max-w-xs space-y-8">
+    <div class="w-full max-w-xs space-y-10">
         <header class="text-center">
-            <h1 class="text-sm font-semibold tracking-widest uppercase text-slate-400">QR Prediction</h1>
+            <h1 class="text-[10px] font-semibold tracking-[0.2em] uppercase text-slate-300">Simple QR Prediction</h1>
         </header>
 
-        <div class="space-y-4">
-            <input 
-                type="text" 
-                id="prediction-input" 
-                placeholder="Ketik data..." 
-                class="w-full bg-slate-50 border-none px-4 py-3 rounded-lg focus:ring-2 focus:ring-slate-200 outline-none transition-all text-center"
-            >
+        <div class="space-y-6">
+            <!-- Input Teks -->
+            <div class="space-y-2">
+                <input 
+                    type="text" 
+                    id="prediction-input" 
+                    placeholder="Ketik prediksi..." 
+                    class="w-full bg-slate-50 border-none px-4 py-3 rounded-xl focus:ring-2 focus:ring-slate-100 outline-none transition-all text-center text-sm font-medium"
+                >
+            </div>
+
+            <!-- Pilihan Situs -->
+            <div class="space-y-3">
+                <p class="text-[10px] text-center font-semibold uppercase tracking-widest text-slate-400">Reveal Site</p>
+                <div class="flex gap-2">
+                    <button data-site="google" class="site-btn flex-1 py-2 text-[11px] font-medium rounded-lg bg-slate-50 text-slate-400 border border-transparent transition-all hover:bg-slate-100">Google</button>
+                    <button data-site="tokopedia" class="site-btn flex-1 py-2 text-[11px] font-medium rounded-lg bg-slate-50 text-slate-400 border border-transparent transition-all hover:bg-slate-100">Tokopedia</button>
+                    <button data-site="imdb" class="site-btn flex-1 py-2 text-[11px] font-medium rounded-lg bg-slate-50 text-slate-400 border border-transparent transition-all hover:bg-slate-100">IMDb</button>
+                </div>
+            </div>
+
             <button 
                 id="submit-btn" 
                 disabled
-                class="w-full bg-slate-900 text-white py-3 rounded-lg font-medium hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-300 transition-all active:scale-95"
+                class="w-full bg-slate-900 text-white py-4 rounded-xl font-semibold text-sm hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-300 transition-all active:scale-95 shadow-lg shadow-slate-100"
             >
-                Update
+                Update Database
             </button>
         </div>
 
-        <div class="pt-8 border-t border-slate-100 text-center">
-            <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-2">Live Data</p>
-            <div id="live-value" class="text-lg font-medium text-slate-800 italic">...</div>
+        <!-- Live Status Display -->
+        <div class="pt-8 border-t border-slate-50 text-center">
+            <div id="live-display" class="space-y-1">
+                <p id="live-value" class="text-base font-medium text-slate-800 italic">...</p>
+                <p id="live-site" class="text-[9px] font-bold text-blue-400 uppercase tracking-tighter">-</p>
+            </div>
         </div>
     </div>
 
-    <!-- Minimalist Debug Console -->
-    <div id="debug-log" class="fixed bottom-0 left-0 right-0 h-16 bg-slate-50 border-t border-slate-100 overflow-y-auto px-4 py-2 font-mono text-[9px] text-slate-400 flex flex-col-reverse">
-        <div>[System] Menunggu koneksi...</div>
+    <!-- Minimalist Debug Console (Bottom Strip) -->
+    <div id="debug-log" class="fixed bottom-0 left-0 right-0 h-12 bg-slate-50/50 backdrop-blur-sm border-t border-slate-100 overflow-hidden px-4 py-3 font-mono text-[8px] text-slate-400 flex flex-col-reverse pointer-events-none">
+        <div>[System] Ready.</div>
     </div>
 
     <script type="module">
@@ -67,6 +84,10 @@
         const submitBtn = document.getElementById('submit-btn');
         const debugLog = document.getElementById('debug-log');
         const liveValue = document.getElementById('live-value');
+        const liveSite = document.getElementById('live-site');
+        const siteBtns = document.querySelectorAll('.site-btn');
+
+        let selectedSite = 'google';
 
         function log(msg) {
             const div = document.createElement('div');
@@ -74,15 +95,36 @@
             debugLog.prepend(div);
         }
 
-        signInAnonymously(auth).then(() => log("Auth ok.")).catch(e => log("Auth err: " + e.message));
+        // Handle Site Selection UI
+        siteBtns.forEach(btn => {
+            btn.onclick = () => {
+                siteBtns.forEach(b => {
+                    b.classList.remove('bg-slate-900', 'text-white', 'border-slate-900');
+                    b.classList.add('bg-slate-50', 'text-slate-400');
+                });
+                btn.classList.remove('bg-slate-50', 'text-slate-400');
+                btn.classList.add('bg-slate-900', 'text-white');
+                selectedSite = btn.getAttribute('data-site');
+                log(`Selected: ${selectedSite}`);
+            };
+        });
+
+        // Default selection
+        siteBtns[0].click();
+
+        signInAnonymously(auth).catch(e => log("Auth err: " + e.message));
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 submitBtn.disabled = false;
-                const targetRef = ref(db, 'predictions/input');
-                onValue(targetRef, (snap) => {
+                log("DB Connected.");
+
+                // Listen both paths
+                onValue(ref(db, 'predictions/input'), (snap) => {
                     liveValue.textContent = snap.val() || "-";
-                    log(`Sync: ${snap.val()}`);
+                });
+                onValue(ref(db, 'predictions/site'), (snap) => {
+                    liveSite.textContent = snap.val() ? `@${snap.val()}` : "-";
                 });
             }
         });
@@ -92,16 +134,24 @@
             if (!val) return;
 
             submitBtn.disabled = true;
+            submitBtn.textContent = "Updating...";
+
             try {
-                await set(ref(db, 'predictions/input'), val);
+                // Set path masing-masing agar bersih
+                await Promise.all([
+                    set(ref(db, 'predictions/input'), val),
+                    set(ref(db, 'predictions/site'), selectedSite)
+                ]);
+                
                 input.value = "";
-                log("Updated.");
+                log("DB Updated.");
             } catch (e) {
                 log("Err: " + e.message);
             } finally {
                 submitBtn.disabled = false;
+                submitBtn.textContent = "Update Database";
             }
         };
     </script>
 </body>
-</html
+</html>
