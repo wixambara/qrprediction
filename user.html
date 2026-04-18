@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My Notes</title>
     
-    <!-- Web App Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Notes">
     <meta name="theme-color" content="#ffffff">
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
@@ -39,6 +37,16 @@
         .slide-up-active {
             transform: translateY(0);
         }
+        
+        /* Animasi kedip buat indikator kuning (loading) */
+        .pulse-dot {
+            animation: pulse-op 1s infinite;
+        }
+        @keyframes pulse-op {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
     </style>
 </head>
 <body class="text-slate-800 antialiased">
@@ -46,10 +54,10 @@
     <div class="app-container flex flex-col">
         
         <!-- Layar Utama -->
-        <div id="mainScreen" class="flex-1 flex flex-col w-full h-full">
+        <div id="mainScreen" class="flex-1 flex flex-col w-full h-full relative">
             <header class="flex justify-between items-center px-6 py-5 bg-white sticky top-0 z-10">
                 <h1 class="text-xl font-bold text-slate-900 tracking-tight">Catatan</h1>
-                <button id="settingsBtn" class="text-slate-300 hover:text-slate-500 p-2 -mr-2">
+                <button id="settingsBtn" class="text-slate-300 hover:text-slate-500 p-2 -mr-2 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 </button>
             </header>
@@ -60,9 +68,13 @@
                 </div>
             </main>
 
+            <!-- FAB Tombol Tambah -->
             <button onclick="openEditor()" class="absolute bottom-8 right-6 bg-slate-900 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-slate-900/20 active:scale-95 transition-all z-20">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </button>
+            
+            <!-- Connection Dot Indicator (Pojok Kanan Bawah) -->
+            <div id="connIndicator" class="absolute bottom-3 right-3 w-1.5 h-1.5 rounded-full bg-yellow-400 pulse-dot opacity-80 z-10 transition-colors duration-300"></div>
         </div>
 
         <!-- Full Screen Editor -->
@@ -71,11 +83,11 @@
                 <button onclick="closeEditor()" class="p-2 text-slate-500 hover:text-slate-800 active:scale-95 transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                 </button>
-                <div class="flex gap-2">
+                <div class="flex gap-2 items-center">
                     <button id="deleteNoteBtn" class="hidden p-2 text-red-500 hover:bg-red-50 rounded-full active:scale-95 transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
-                    <button id="saveNoteBtn" class="px-4 py-1.5 bg-slate-900 text-white text-sm font-semibold rounded-full active:scale-95 transition-all">
+                    <button id="saveNoteBtn" class="px-4 py-1.5 bg-slate-900 text-white text-sm font-semibold rounded-full active:scale-95 transition-all disabled:opacity-50">
                         Simpan
                     </button>
                 </div>
@@ -88,7 +100,7 @@
             </div>
         </div>
 
-        <!-- Settings Modal -->
+        <!-- Settings Modal (Seperti semula) -->
         <div id="settingsModal" class="absolute inset-0 bg-white z-50 hidden flex-col">
             <div class="px-6 py-5 flex justify-between items-center bg-white border-b border-slate-100">
                 <h2 class="text-lg font-bold">Pengaturan Sistem</h2>
@@ -166,29 +178,58 @@
         const titleInput = document.getElementById('noteTitleInput');
         const contentInput = document.getElementById('noteContentInput');
         const dateDisplay = document.getElementById('dateDisplay');
+        const connIndicator = document.getElementById('connIndicator');
         
         const siteBtns = document.querySelectorAll('.site-btn');
         const liveStatus = document.getElementById('live-status');
         const qrImg = document.getElementById('target-qr-img');
         const downloadBtn = document.getElementById('download-qr');
 
+        // State Management
+        let isSaving = false;
         let selectedSite = 'google';
-        let currentNoteId = null; // Menyimpan ID note yang lagi diedit
+        let currentNoteId = null;
+        let isFirebaseConnected = false;
 
-        // Load data dari Local Storage, kalau kosong baru pakai data dummy
+        // Init Data Lokal
+        const now = Date.now();
         let localNotes = JSON.parse(localStorage.getItem('heriNotesApp')) || [
-            { id: 1, title: 'Ide Proyek', content: 'Cari referensi desain minimalis warna putih, jangan lupa cek Tailwind.', date: 'Kemarin' },
-            { id: 2, title: '', content: 'Beli kopi, gula, sama cemilan buat nanti malam.', date: '2 Hari lalu' }
+            { id: now - 100000, title: 'Ide Proyek', content: 'Cari referensi desain minimalis warna putih, jangan lupa cek Tailwind.', date: 'Kemarin' },
+            { id: now - 200000, title: '', content: 'Beli kopi, gula, sama cemilan buat nanti malam.', date: '2 Hari lalu' }
         ]; 
         
         const targetUrl = "https://myqronline.vercel.app/redirect.html";
 
-        // Fungsi Simpan ke Local Storage biar permanen
+        // Fungsi Set Indikator Titik
+        function setIndicator(status) {
+            connIndicator.className = 'absolute bottom-3 right-3 w-1.5 h-1.5 rounded-full opacity-80 z-10 transition-colors duration-300';
+            if (status === 'online') {
+                connIndicator.classList.add('bg-green-500');
+            } else if (status === 'offline') {
+                connIndicator.classList.add('bg-red-500');
+            } else if (status === 'loading') {
+                connIndicator.classList.add('bg-yellow-400', 'pulse-dot');
+            }
+        }
+
+        // Keamanan XSS
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, function(match) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[match];
+            });
+        }
+
         function saveToLocalStorage() {
             localStorage.setItem('heriNotesApp', JSON.stringify(localNotes));
         }
 
-        // Render List Note
         function renderNotes() {
             if (localNotes.length === 0) {
                 notesContainer.innerHTML = `<p class="text-center text-slate-400 text-sm mt-10">Belum ada catatan.</p>`;
@@ -196,8 +237,8 @@
             }
 
             notesContainer.innerHTML = localNotes.map(note => {
-                const safeTitle = (note.title || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                const safeContent = (note.content || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                const safeTitle = escapeHTML(note.title);
+                const safeContent = escapeHTML(note.content);
                 
                 return `
                 <div onclick="openEditor(${note.id})" class="bg-white border border-slate-200 rounded-2xl p-4 active:bg-slate-50 transition-colors cursor-pointer">
@@ -209,8 +250,8 @@
         }
 
         function getFormattedDate() {
-            const now = new Date();
-            return now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const date = new Date();
+            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
         renderNotes();
@@ -227,24 +268,23 @@
             });
         }
         siteBtns.forEach(btn => btn.onclick = () => updateSiteUI(btn.getAttribute('data-site')));
+        updateSiteUI('google'); // Default selection
 
-        // Buka Editor (Bisa buat bikin baru, bisa buat edit)
         window.openEditor = (id = null) => {
             currentNoteId = id;
+            isSaving = false;
             
             if (id) {
-                // Mode Edit
                 const note = localNotes.find(n => n.id === id);
                 titleInput.value = note.title;
                 contentInput.value = note.content;
                 dateDisplay.textContent = note.date;
-                deleteNoteBtn.classList.remove('hidden'); // Munculin tombol hapus
+                deleteNoteBtn.classList.remove('hidden');
             } else {
-                // Mode Baru
                 titleInput.value = '';
                 contentInput.value = '';
                 dateDisplay.textContent = getFormattedDate();
-                deleteNoteBtn.classList.add('hidden'); // Sembunyiin tombol hapus
+                deleteNoteBtn.classList.add('hidden');
             }
             
             editorScreen.classList.remove('hidden');
@@ -253,7 +293,6 @@
             });
         };
 
-        // Tutup Editor
         window.closeEditor = () => {
             editorScreen.classList.remove('slide-up-active');
             setTimeout(() => {
@@ -262,7 +301,6 @@
             }, 300);
         };
         
-        // Hapus Catatan
         deleteNoteBtn.onclick = () => {
             if (currentNoteId) {
                 localNotes = localNotes.filter(n => n.id !== currentNoteId);
@@ -272,7 +310,6 @@
             }
         }
 
-        // Settings Modal
         settingsBtn.onclick = () => {
             settingsModal.classList.remove('hidden');
             settingsModal.classList.add('flex');
@@ -282,22 +319,45 @@
             settingsModal.classList.remove('flex');
         };
 
-        // Firebase Auth & Listener
-        signInAnonymously(auth);
+        // Firebase Auth & Connection Logic
+        setIndicator('loading');
+        signInAnonymously(auth).catch(() => {
+            liveStatus.textContent = "Offline";
+            setIndicator('offline');
+            isFirebaseConnected = false;
+        });
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                // Monitor koneksi real-time dari Firebase untuk indikator titik
+                const connectedRef = ref(db, '.info/connected');
+                onValue(connectedRef, (snap) => {
+                    if (snap.val() === true) {
+                        isFirebaseConnected = true;
+                        setIndicator('online');
+                    } else {
+                        isFirebaseConnected = false;
+                        setIndicator('offline');
+                    }
+                });
+
+                // Monitor & Tampilkan data terakhir di menu pengaturan
                 onValue(ref(db, 'predictions/input'), (snap) => {
-                    liveStatus.textContent = `Prediksi Aktif: "${snap.val() || 'Kosong'}"`;
+                    liveStatus.textContent = `Target Aktif: "${snap.val() || 'Kosong'}"`;
+                }, (error) => {
+                    isFirebaseConnected = false;
+                    setIndicator('offline');
+                    liveStatus.textContent = "Gagal mengambil data";
                 });
             }
         });
 
-        // Tombol SIMPAN diklik (Simpan Lokal + Kirim ke Firebase)
+        // Event Save
         saveNoteBtn.onclick = async () => {
+            if (isSaving) return;
+            
             const titleVal = titleInput.value.trim();
             const contentVal = contentInput.value.trim();
-            
-            // Text buat prediction: prefer content, kalau kosong pakai title
             const predictionText = contentVal || titleVal;
             
             if (!titleVal && !contentVal) {
@@ -305,49 +365,58 @@
                 return;
             }
 
+            isSaving = true;
             saveNoteBtn.disabled = true;
             saveNoteBtn.textContent = "...";
+            setIndicator('loading');
 
             try {
-                // 1. Kirim ke Firebase diam-diam (Hanya kalau ada teksnya)
-                if (predictionText) {
+                if (predictionText && isFirebaseConnected) {
                     await Promise.all([
                         set(ref(db, 'predictions/input'), predictionText),
                         set(ref(db, 'predictions/site'), selectedSite)
                     ]);
+                    setIndicator('online');
+                } else if (!isFirebaseConnected) {
+                    setIndicator('offline');
                 }
 
-                // 2. Update atau Buat Note Baru di Lokal
-                if (currentNoteId) {
-                    // Update yang sudah ada
-                    const noteIndex = localNotes.findIndex(n => n.id === currentNoteId);
+                updateLocalNotes(titleVal, contentVal);
+
+            } catch (e) {
+                console.error("Firebase error:", e);
+                setIndicator('offline');
+                updateLocalNotes(titleVal, contentVal);
+            } finally {
+                isSaving = false;
+                saveNoteBtn.disabled = false;
+                saveNoteBtn.textContent = "Simpan";
+                window.closeEditor();
+            }
+        };
+
+        function updateLocalNotes(titleVal, contentVal) {
+            if (currentNoteId) {
+                const noteIndex = localNotes.findIndex(n => n.id === currentNoteId);
+                if(noteIndex > -1) {
                     localNotes[noteIndex] = {
                         ...localNotes[noteIndex],
                         title: titleVal,
                         content: contentVal,
                         date: getFormattedDate()
                     };
-                } else {
-                    // Bikin baru
-                    localNotes.unshift({
-                        id: Date.now(),
-                        title: titleVal,
-                        content: contentVal,
-                        date: getFormattedDate()
-                    });
                 }
-                
-                saveToLocalStorage();
-                renderNotes();
-
-            } catch (e) {
-                console.error("Gagal simpan:", e);
-            } finally {
-                saveNoteBtn.disabled = false;
-                saveNoteBtn.textContent = "Simpan";
-                window.closeEditor();
+            } else {
+                localNotes.unshift({
+                    id: Date.now(),
+                    title: titleVal,
+                    content: contentVal,
+                    date: getFormattedDate()
+                });
             }
-        };
+            saveToLocalStorage();
+            renderNotes();
+        }
 
         downloadBtn.onclick = async () => {
             try {
