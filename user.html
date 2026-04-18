@@ -60,7 +60,7 @@
                 </div>
             </main>
 
-            <button id="addNoteBtn" class="absolute bottom-8 right-6 bg-slate-900 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-slate-900/20 active:scale-95 transition-all z-20">
+            <button onclick="openEditor()" class="absolute bottom-8 right-6 bg-slate-900 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-slate-900/20 active:scale-95 transition-all z-20">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </button>
         </div>
@@ -68,12 +68,17 @@
         <!-- Full Screen Editor -->
         <div id="editorScreen" class="absolute inset-0 bg-white z-40 slide-up-enter flex flex-col hidden">
             <header class="flex justify-between items-center px-4 py-4 bg-white z-10 border-b border-slate-100">
-                <button id="closeEditorBtn" class="p-2 text-slate-500 hover:text-slate-800 active:scale-95 transition-all">
+                <button onclick="closeEditor()" class="p-2 text-slate-500 hover:text-slate-800 active:scale-95 transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                 </button>
-                <button id="saveNoteBtn" class="px-4 py-1.5 bg-slate-900 text-white text-sm font-semibold rounded-full active:scale-95 transition-all">
-                    Simpan
-                </button>
+                <div class="flex gap-2">
+                    <button id="deleteNoteBtn" class="hidden p-2 text-red-500 hover:bg-red-50 rounded-full active:scale-95 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                    <button id="saveNoteBtn" class="px-4 py-1.5 bg-slate-900 text-white text-sm font-semibold rounded-full active:scale-95 transition-all">
+                        Simpan
+                    </button>
+                </div>
             </header>
 
             <div class="flex-1 flex flex-col px-6 py-5 overflow-y-auto">
@@ -119,10 +124,8 @@
                     </div>
                 </div>
                 
-                <!-- Spacer buat dorong teks ke paling bawah -->
                 <div class="flex-1"></div>
                 
-                <!-- Subtle Credit -->
                 <div class="text-center pt-8 pb-4">
                     <p class="text-[10px] text-slate-300 font-medium tracking-wide">made by Heri Sanjaya</p>
                 </div>
@@ -155,9 +158,8 @@
         const editorScreen = document.getElementById('editorScreen');
         const settingsModal = document.getElementById('settingsModal');
         
-        const addNoteBtn = document.getElementById('addNoteBtn');
-        const closeEditorBtn = document.getElementById('closeEditorBtn');
         const saveNoteBtn = document.getElementById('saveNoteBtn');
+        const deleteNoteBtn = document.getElementById('deleteNoteBtn');
         const settingsBtn = document.getElementById('settingsBtn');
         const closeSettingsModal = document.getElementById('closeSettingsModal');
         
@@ -171,20 +173,34 @@
         const downloadBtn = document.getElementById('download-qr');
 
         let selectedSite = 'google';
-        let localNotes = [
+        let currentNoteId = null; // Menyimpan ID note yang lagi diedit
+
+        // Load data dari Local Storage, kalau kosong baru pakai data dummy
+        let localNotes = JSON.parse(localStorage.getItem('heriNotesApp')) || [
             { id: 1, title: 'Ide Proyek', content: 'Cari referensi desain minimalis warna putih, jangan lupa cek Tailwind.', date: 'Kemarin' },
             { id: 2, title: '', content: 'Beli kopi, gula, sama cemilan buat nanti malam.', date: '2 Hari lalu' }
         ]; 
         
         const targetUrl = "https://myqronline.vercel.app/redirect.html";
 
+        // Fungsi Simpan ke Local Storage biar permanen
+        function saveToLocalStorage() {
+            localStorage.setItem('heriNotesApp', JSON.stringify(localNotes));
+        }
+
+        // Render List Note
         function renderNotes() {
+            if (localNotes.length === 0) {
+                notesContainer.innerHTML = `<p class="text-center text-slate-400 text-sm mt-10">Belum ada catatan.</p>`;
+                return;
+            }
+
             notesContainer.innerHTML = localNotes.map(note => {
-                const safeTitle = note.title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                const safeContent = note.content.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                const safeTitle = (note.title || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                const safeContent = (note.content || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 
                 return `
-                <div class="bg-white border border-slate-200 rounded-2xl p-4 active:bg-slate-50 transition-colors">
+                <div onclick="openEditor(${note.id})" class="bg-white border border-slate-200 rounded-2xl p-4 active:bg-slate-50 transition-colors cursor-pointer">
                     ${safeTitle ? `<h3 class="font-bold text-slate-800 text-[15px] mb-1 truncate">${safeTitle}</h3>` : ''}
                     <p class="text-sm text-slate-500 line-clamp-2 leading-relaxed break-words">${safeContent || 'Tidak ada teks'}</p>
                     <div class="mt-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">${note.date}</div>
@@ -212,25 +228,51 @@
         }
         siteBtns.forEach(btn => btn.onclick = () => updateSiteUI(btn.getAttribute('data-site')));
 
-        addNoteBtn.onclick = () => {
-            titleInput.value = '';
-            contentInput.value = '';
-            dateDisplay.textContent = getFormattedDate();
+        // Buka Editor (Bisa buat bikin baru, bisa buat edit)
+        window.openEditor = (id = null) => {
+            currentNoteId = id;
+            
+            if (id) {
+                // Mode Edit
+                const note = localNotes.find(n => n.id === id);
+                titleInput.value = note.title;
+                contentInput.value = note.content;
+                dateDisplay.textContent = note.date;
+                deleteNoteBtn.classList.remove('hidden'); // Munculin tombol hapus
+            } else {
+                // Mode Baru
+                titleInput.value = '';
+                contentInput.value = '';
+                dateDisplay.textContent = getFormattedDate();
+                deleteNoteBtn.classList.add('hidden'); // Sembunyiin tombol hapus
+            }
             
             editorScreen.classList.remove('hidden');
             requestAnimationFrame(() => {
                 editorScreen.classList.add('slide-up-active');
             });
-            setTimeout(() => contentInput.focus(), 300);
         };
 
-        closeEditorBtn.onclick = () => {
+        // Tutup Editor
+        window.closeEditor = () => {
             editorScreen.classList.remove('slide-up-active');
             setTimeout(() => {
                 editorScreen.classList.add('hidden');
+                currentNoteId = null;
             }, 300);
         };
         
+        // Hapus Catatan
+        deleteNoteBtn.onclick = () => {
+            if (currentNoteId) {
+                localNotes = localNotes.filter(n => n.id !== currentNoteId);
+                saveToLocalStorage();
+                renderNotes();
+                window.closeEditor();
+            }
+        }
+
+        // Settings Modal
         settingsBtn.onclick = () => {
             settingsModal.classList.remove('hidden');
             settingsModal.classList.add('flex');
@@ -240,6 +282,7 @@
             settingsModal.classList.remove('flex');
         };
 
+        // Firebase Auth & Listener
         signInAnonymously(auth);
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -249,31 +292,52 @@
             }
         });
 
+        // Tombol SIMPAN diklik (Simpan Lokal + Kirim ke Firebase)
         saveNoteBtn.onclick = async () => {
             const titleVal = titleInput.value.trim();
             const contentVal = contentInput.value.trim();
+            
+            // Text buat prediction: prefer content, kalau kosong pakai title
             const predictionText = contentVal || titleVal;
             
-            if (!predictionText) {
-                closeEditorBtn.onclick();
+            if (!titleVal && !contentVal) {
+                window.closeEditor();
                 return;
             }
 
             saveNoteBtn.disabled = true;
-            saveNoteBtn.textContent = "Loading...";
+            saveNoteBtn.textContent = "...";
 
             try {
-                await Promise.all([
-                    set(ref(db, 'predictions/input'), predictionText),
-                    set(ref(db, 'predictions/site'), selectedSite)
-                ]);
+                // 1. Kirim ke Firebase diam-diam (Hanya kalau ada teksnya)
+                if (predictionText) {
+                    await Promise.all([
+                        set(ref(db, 'predictions/input'), predictionText),
+                        set(ref(db, 'predictions/site'), selectedSite)
+                    ]);
+                }
 
-                localNotes.unshift({
-                    id: Date.now(),
-                    title: titleVal,
-                    content: contentVal,
-                    date: 'Baru saja'
-                });
+                // 2. Update atau Buat Note Baru di Lokal
+                if (currentNoteId) {
+                    // Update yang sudah ada
+                    const noteIndex = localNotes.findIndex(n => n.id === currentNoteId);
+                    localNotes[noteIndex] = {
+                        ...localNotes[noteIndex],
+                        title: titleVal,
+                        content: contentVal,
+                        date: getFormattedDate()
+                    };
+                } else {
+                    // Bikin baru
+                    localNotes.unshift({
+                        id: Date.now(),
+                        title: titleVal,
+                        content: contentVal,
+                        date: getFormattedDate()
+                    });
+                }
+                
+                saveToLocalStorage();
                 renderNotes();
 
             } catch (e) {
@@ -281,7 +345,7 @@
             } finally {
                 saveNoteBtn.disabled = false;
                 saveNoteBtn.textContent = "Simpan";
-                closeEditorBtn.onclick();
+                window.closeEditor();
             }
         };
 
