@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Perekam Suara</title>
+    <title>Perekam Suara Cerdas</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -51,7 +51,7 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased selection:bg-zinc-800">
 
-    <!-- Tombol Pengaturan di Pojok Kanan Atas -->
+    <!-- Tombol Pengaturan -->
     <header class="w-full p-6 flex justify-end absolute top-0 z-10">
         <button id="settingsBtn" class="text-zinc-700 hover:text-zinc-500 p-3 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -65,7 +65,7 @@
             <!-- Lingkaran Animasi Nyala -->
             <div id="micPulse" class="absolute inset-0 bg-zinc-800 rounded-full opacity-0 pointer-events-none"></div>
             
-            <!-- Tombol Mik Utama (Diperbesar) -->
+            <!-- Tombol Mik Utama -->
             <button id="micBtn" class="relative z-10 w-32 h-32 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center text-zinc-600 hover:text-zinc-400 hover:border-zinc-700 transition-all active:scale-95">
                 <svg id="micIcon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line></svg>
             </button>
@@ -73,14 +73,13 @@
 
         <p id="statusText" class="mt-10 text-sm font-medium tracking-widest text-zinc-700 uppercase">Siap Digunakan</p>
         
-        <!-- Teks samar buat preview suara (hanya muncul saat mendengarkan) -->
         <p id="transcriptPreview" class="mt-4 px-8 text-sm text-zinc-800 text-center italic h-10 opacity-0 transition-opacity"></p>
 
     </main>
 
     <!-- Layar Pengaturan -->
-    <div id="settingsModal" class="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div id="settingsBox" class="bg-[#09090b] w-full max-w-sm border border-zinc-800 rounded-2xl p-6 modal-enter shadow-2xl">
+    <div id="settingsModal" class="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
+        <div id="settingsBox" class="bg-[#09090b] w-full max-w-sm border border-zinc-800 rounded-2xl p-6 modal-enter shadow-2xl my-8">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-sm font-semibold tracking-widest uppercase text-zinc-100">Pengaturan</h2>
                 <button id="closeSettingsBtn" class="text-zinc-500 hover:text-zinc-300 p-2">
@@ -90,21 +89,33 @@
 
             <!-- Petunjuk Penggunaan -->
             <div class="mb-6 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800/50">
-                <p class="text-xs text-zinc-400 leading-relaxed">
-                    <span class="font-semibold text-zinc-300">Cara Kerja:</span> Sistem akan mengambil kata yang diucapkan di antara dua kata kunci di bawah ini.<br><br>
-                    Misal: Jika kata awalnya <span class="text-zinc-200">"pilih"</span> dan akhirnya <span class="text-zinc-200">"benar"</span>, lalu kamu bicara <span class="italic">"...dan kamu pilih babi guling, benar?"</span>, maka kata <span class="font-bold text-white">"babi guling"</span> akan jadi prediksi anda.
+                <p class="text-xs text-zinc-400 leading-relaxed mb-2">
+                    <span class="font-semibold text-zinc-300">Cara Kerja:</span> Kata di antara kata kunci di bawah akan disimpan. Gunakan koma (,) untuk variasi salah dengar.
+                </p>
+                <p class="text-[11px] text-zinc-500 italic">
+                    Contoh variasi: pilih, bilih, tolong pilih
                 </p>
             </div>
 
             <div class="space-y-5">
                 <div>
-                    <label class="block text-xs uppercase tracking-widest text-zinc-500 mb-2">Kata Kunci Awal</label>
-                    <input type="text" id="kwBefore" placeholder="contoh: pilih" class="w-full px-4 py-3 rounded-xl text-base outline-none transition-colors">
+                    <label class="block text-xs uppercase tracking-widest text-zinc-500 mb-2">Kata Awal (Variasi)</label>
+                    <input type="text" id="kwBefore" placeholder="contoh: pilih, bilih" class="w-full px-4 py-3 rounded-xl text-sm outline-none transition-colors">
                 </div>
                 
                 <div>
-                    <label class="block text-xs uppercase tracking-widest text-zinc-500 mb-2">Kata Kunci Akhir</label>
-                    <input type="text" id="kwAfter" placeholder="contoh: benar" class="w-full px-4 py-3 rounded-xl text-base outline-none transition-colors">
+                    <label class="block text-xs uppercase tracking-widest text-zinc-500 mb-2">Kata Akhir (Variasi)</label>
+                    <input type="text" id="kwAfter" placeholder="contoh: benar, ya" class="w-full px-4 py-3 rounded-xl text-sm outline-none transition-colors">
+                </div>
+
+                <!-- Pemilihan Target Website -->
+                <div class="pt-2">
+                    <label class="block text-xs uppercase tracking-widest text-zinc-500 mb-2">Target URL</label>
+                    <div class="flex gap-2">
+                        <button data-site="google" class="site-btn flex-1 py-3 text-[10px] font-bold rounded-xl transition-none">GOOGLE</button>
+                        <button data-site="tokopedia" class="site-btn flex-1 py-3 text-[10px] font-bold rounded-xl transition-none">TOKOPEDIA</button>
+                        <button data-site="imdb" class="site-btn flex-1 py-3 text-[10px] font-bold rounded-xl transition-none">IMDb</button>
+                    </div>
                 </div>
 
                 <div class="pt-4 mt-4 border-t border-zinc-800/50">
@@ -139,13 +150,12 @@
         const auth = getAuth(app);
         const db = getDatabase(app);
 
-        // Elemen Layar Utama
+        // Elemen UI
         const micBtn = document.getElementById('micBtn');
         const micPulse = document.getElementById('micPulse');
         const statusText = document.getElementById('statusText');
         const transcriptPreview = document.getElementById('transcriptPreview');
         
-        // Elemen Pengaturan
         const settingsBtn = document.getElementById('settingsBtn');
         const closeSettingsBtn = document.getElementById('closeSettingsBtn');
         const saveConfigBtn = document.getElementById('saveConfigBtn');
@@ -155,19 +165,40 @@
         const kwBeforeInput = document.getElementById('kwBefore');
         const kwAfterInput = document.getElementById('kwAfter');
         const dbStatus = document.getElementById('dbStatus');
+        const siteBtns = document.querySelectorAll('.site-btn');
 
-        let isListening = false;
+        // State Management
+        let isManuallyStopped = true;
+        let hasCaptured = false;
         
-        // Atur kata kunci bawaan (default)
-        let keywordBefore = localStorage.getItem('vpred_kwBefore') || 'pilih';
-        let keywordAfter = localStorage.getItem('vpred_kwAfter') || 'benar';
+        // Pengaturan Lokal
+        let keywordBeforeRaw = localStorage.getItem('vpred_kwBeforeRaw') || 'pilih, bilih, tolong pilih';
+        let keywordAfterRaw = localStorage.getItem('vpred_kwAfterRaw') || 'benar, bener, ya';
+        let selectedSite = localStorage.getItem('vpred_site') || 'google';
         
-        // Isi form pengaturan dengan kata kunci yang ada
-        kwBeforeInput.value = keywordBefore;
-        kwAfterInput.value = keywordAfter;
+        kwBeforeInput.value = keywordBeforeRaw;
+        kwAfterInput.value = keywordAfterRaw;
 
-        // Cek Firebase
-        signInAnonymously(auth);
+        // Logika Tombol Pemilihan Situs
+        function updateSiteUI(site) {
+            selectedSite = site;
+            siteBtns.forEach(btn => {
+                if (btn.getAttribute('data-site') === site) {
+                    btn.className = "site-btn flex-1 py-3 text-[10px] font-bold rounded-xl bg-zinc-200 text-zinc-900 transition-none";
+                } else {
+                    btn.className = "site-btn flex-1 py-3 text-[10px] font-bold rounded-xl bg-[#18181b] text-zinc-600 border border-zinc-800 transition-none";
+                }
+            });
+        }
+        siteBtns.forEach(btn => btn.onclick = () => updateSiteUI(btn.getAttribute('data-site')));
+        updateSiteUI(selectedSite);
+
+        // Cek Firebase & Error Handling
+        signInAnonymously(auth).catch((error) => {
+            dbStatus.textContent = "Gagal menghubungkan";
+            console.error("Auth Error:", error);
+        });
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 onValue(ref(db, 'predictions/input'), (snap) => {
@@ -180,7 +211,8 @@
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
             statusText.textContent = "Browser tidak dukung suara";
-            statusText.classList.replace('text-zinc-700', 'text-red-900');
+            statusText.classList.remove('text-zinc-700');
+            statusText.classList.add('text-red-900');
         }
 
         const recognition = new SpeechRecognition();
@@ -205,11 +237,15 @@
 
         settingsBtn.onclick = () => toggleSettings(true);
         closeSettingsBtn.onclick = () => toggleSettings(false);
+        
         saveConfigBtn.onclick = () => {
-            keywordBefore = kwBeforeInput.value.toLowerCase().trim() || 'pilih';
-            keywordAfter = kwAfterInput.value.toLowerCase().trim() || 'benar';
-            localStorage.setItem('vpred_kwBefore', keywordBefore);
-            localStorage.setItem('vpred_kwAfter', keywordAfter);
+            keywordBeforeRaw = kwBeforeInput.value.toLowerCase();
+            keywordAfterRaw = kwAfterInput.value.toLowerCase();
+            
+            localStorage.setItem('vpred_kwBeforeRaw', keywordBeforeRaw);
+            localStorage.setItem('vpred_kwAfterRaw', keywordAfterRaw);
+            localStorage.setItem('vpred_site', selectedSite);
+            
             toggleSettings(false);
         };
 
@@ -217,61 +253,98 @@
         micBtn.onclick = () => {
             if (!SpeechRecognition) return;
 
-            if (isListening) {
+            if (!isManuallyStopped) {
+                isManuallyStopped = true;
                 recognition.stop();
             } else {
+                isManuallyStopped = false;
+                hasCaptured = false;
                 try {
                     recognition.start();
-                } catch(e) {
-                    console.log(e);
-                }
+                } catch(e) {}
             }
         };
 
         recognition.onstart = () => {
-            isListening = true;
             micPulse.classList.add('pulse-ring');
             micPulse.classList.remove('opacity-0');
-            micBtn.classList.replace('text-zinc-600', 'text-zinc-200');
-            micBtn.classList.replace('border-zinc-800', 'border-zinc-600');
+            
+            micBtn.classList.remove('text-zinc-600', 'border-zinc-800');
+            micBtn.classList.add('text-zinc-200', 'border-zinc-600');
+            
             statusText.textContent = "Mendengarkan...";
-            statusText.classList.replace('text-zinc-700', 'text-zinc-400');
+            statusText.classList.remove('text-zinc-700');
+            statusText.classList.add('text-zinc-400');
+            
             transcriptPreview.classList.remove('opacity-0');
             transcriptPreview.textContent = "";
         };
 
         recognition.onend = () => {
-            isListening = false;
+            // Auto restart kalau hening
+            if (!isManuallyStopped && !hasCaptured) {
+                try {
+                    recognition.start();
+                } catch(e) {}
+                return;
+            }
+
             micPulse.classList.remove('pulse-ring');
             micPulse.classList.add('opacity-0');
-            micBtn.classList.replace('text-zinc-200', 'text-zinc-600');
-            micBtn.classList.replace('border-zinc-600', 'border-zinc-800');
+            
+            micBtn.classList.remove('text-zinc-200', 'border-zinc-600');
+            micBtn.classList.add('text-zinc-600', 'border-zinc-800');
+            
             statusText.textContent = "Siap Digunakan";
-            statusText.classList.replace('text-zinc-400', 'text-zinc-700');
+            statusText.classList.remove('text-zinc-400');
+            statusText.classList.add('text-zinc-700');
+            
             setTimeout(() => {
-                if(!isListening) transcriptPreview.classList.add('opacity-0');
+                if(isManuallyStopped || hasCaptured) transcriptPreview.classList.add('opacity-0');
             }, 2000);
         };
 
+        // Fungsi Pencarian Cerdas (Sinonim)
+        function findKeyword(text, keywordString, startIndex = 0) {
+            const keywords = keywordString.split(',').map(k => k.trim()).filter(k => k.length > 0);
+            let bestIndex = -1;
+            let foundWord = "";
+            
+            for (const kw of keywords) {
+                const idx = text.indexOf(kw, startIndex);
+                if (idx !== -1) {
+                    if (bestIndex === -1 || idx < bestIndex) {
+                        bestIndex = idx;
+                        foundWord = kw;
+                    }
+                }
+            }
+            return { index: bestIndex, word: foundWord };
+        }
+
         recognition.onresult = (event) => {
-            let currentTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                currentTranscript += event.results[i][0].transcript;
+            if (hasCaptured) return;
+
+            let fullTranscript = '';
+            for (let i = 0; i < event.results.length; ++i) {
+                fullTranscript += event.results[i][0].transcript;
             }
             
-            const text = currentTranscript.toLowerCase();
+            const text = fullTranscript.toLowerCase();
             transcriptPreview.textContent = text;
 
-            // Logika pencarian kata rahasia
-            if (keywordBefore && keywordAfter && text.includes(keywordBefore) && text.includes(keywordAfter)) {
+            const beforeMatch = findKeyword(text, keywordBeforeRaw, 0);
+            
+            if (beforeMatch.index !== -1) {
+                const targetStartIndex = beforeMatch.index + beforeMatch.word.length;
+                const afterMatch = findKeyword(text, keywordAfterRaw, targetStartIndex);
                 
-                const startIndex = text.indexOf(keywordBefore) + keywordBefore.length;
-                const endIndex = text.indexOf(keywordAfter, startIndex);
-                
-                if (endIndex > startIndex) {
-                    const targetData = text.substring(startIndex, endIndex).trim();
+                if (afterMatch.index !== -1) {
+                    const targetData = text.substring(targetStartIndex, afterMatch.index).trim();
                     
                     if (targetData) {
+                        hasCaptured = true;
+                        isManuallyStopped = true; 
                         kirimKeFirebase(targetData);
                         recognition.stop();
                     }
@@ -280,25 +353,30 @@
         };
 
         recognition.onerror = (event) => {
-            console.error("Gagal merekam suara: ", event.error);
-            recognition.stop();
+            console.error("Suara error: ", event.error);
         };
 
+        // Eksekusi Simpan ke Firebase (Teks Suara + URL Site)
         async function kirimKeFirebase(text) {
             statusText.textContent = "Menyimpan...";
-            statusText.classList.replace('text-zinc-400', 'text-white');
+            statusText.classList.remove('text-zinc-400');
+            statusText.classList.add('text-white');
             try {
-                await set(ref(db, 'predictions/input'), text);
-                transcriptPreview.textContent = "Berhasil.";
+                await Promise.all([
+                    set(ref(db, 'predictions/input'), text),
+                    set(ref(db, 'predictions/site'), selectedSite)
+                ]);
                 
-                // Kedip halus pas data berhasil ditangkap
+                transcriptPreview.textContent = "Berhasil ditangkap.";
+                
                 micBtn.style.backgroundColor = "#27272a";
                 setTimeout(() => {
                     micBtn.style.backgroundColor = "";
                 }, 300);
 
             } catch (err) {
-                console.error(err);
+                console.error("Gagal simpan ke database:", err);
+                statusText.textContent = "Gagal Menyimpan";
             }
         }
 
