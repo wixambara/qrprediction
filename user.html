@@ -69,6 +69,11 @@
       content: "Ketik prompt di sini...";
       color: #94a3b8;
     }
+    
+    /* Console Custom Scrollbar */
+    #system-console::-webkit-scrollbar { width: 4px; }
+    #system-console::-webkit-scrollbar-track { background: transparent; }
+    #system-console::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
   </style>
 </head>
 
@@ -106,7 +111,6 @@
         alt="Google" 
       />
 
-      <!-- Trigger Search dengan autocapitalize off -->
       <div id="main-search-trigger" class="flex items-center w-full max-w-[600px] border border-[#dfe1e5] shadow-sm rounded-full px-4 py-2.5 bg-white cursor-text">
         <span class="mr-3 text-[#9aa0a6] flex items-center">
           <span class="material-symbols-outlined text-[22px]">search</span>
@@ -178,9 +182,8 @@
     <div id="suggestions-list" class="flex-grow overflow-y-auto overflow-x-hidden bg-white pt-2 w-full"></div>
   </div>
 
-  <!-- ==================== LAYAR LOADING PENUH (FULL-SCREEN LOADER) ==================== -->
+  <!-- ==================== LAYAR LOADING PENUH ==================== -->
   <div id="ai-loading-screen" class="fixed inset-0 bg-white z-[200] hidden flex-col justify-center items-center">
-    <!-- Spinner Khas Google -->
     <div class="w-10 h-10 border-[3px] border-[#f3f3f3] border-t-[#1a73e8] rounded-full animate-spin mb-4"></div>
     <p class="text-[#5f6368] text-[15px] font-medium tracking-wide">
       searching<span class="dot-1">.</span><span class="dot-2">.</span><span class="dot-3">.</span>
@@ -200,7 +203,7 @@
       
       <div class="p-5 space-y-7 overflow-y-auto flex-1 font-sans">
         
-        <!-- Bagian 1: Target URL -->
+        <!-- Target URL -->
         <div class="space-y-3">
           <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Target URL</h3>
           <div class="flex flex-col gap-2">
@@ -210,7 +213,7 @@
           </div>
         </div>
 
-        <!-- Bagian 2: AI Prompt -->
+        <!-- AI Prompt -->
         <div class="space-y-3">
           <div class="flex justify-between items-center">
             <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Prompt AI (Gemini 2.5 Flash)</h3>
@@ -218,10 +221,10 @@
               <span class="material-symbols-outlined text-[14px]">add</span> Kata Kunci
             </button>
           </div>
-          <div id="ai-prompt-input" contenteditable="true" class="w-full min-h-[110px] border border-slate-200 rounded-xl p-3 text-[14px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0b57d0] focus:border-transparent leading-relaxed bg-slate-50 break-words whitespace-pre-wrap"></div>
+          <div id="ai-prompt-input" contenteditable="true" class="w-full min-h-[90px] border border-slate-200 rounded-xl p-3 text-[14px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0b57d0] focus:border-transparent leading-relaxed bg-slate-50 break-words whitespace-pre-wrap"></div>
         </div>
 
-        <!-- Bagian 3: Status Database -->
+        <!-- Status Database -->
         <div class="space-y-2 p-4 bg-slate-50 rounded-xl border border-slate-100 relative overflow-hidden">
           <div class="flex items-center gap-2 mb-1">
             <div id="connIndicator" class="w-2.5 h-2.5 rounded-full bg-yellow-400 pulse-dot"></div>
@@ -230,8 +233,34 @@
           <p id="live-status" class="text-sm font-medium text-slate-700 ml-[18px]">Menghubungkan...</p>
         </div>
 
+        <!-- Console Log Baru -->
+        <div class="space-y-2 mt-4">
+          <div class="flex justify-between items-center">
+             <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">System Console</h3>
+             <button id="clear-console-btn" class="text-[10px] text-slate-500 hover:text-slate-800 font-semibold uppercase tracking-wider bg-slate-100 px-2 py-1 rounded">Clear</button>
+          </div>
+          <div id="system-console" class="w-full h-32 bg-[#1e1e1e] text-[#4ade80] font-mono text-[11px] p-3 rounded-xl overflow-y-auto break-words shadow-inner leading-relaxed">
+              &gt; System initialized...
+          </div>
+        </div>
+
+        <!-- QR Code Target -->
+        <div class="pt-4 pb-2 space-y-4 text-center border-t border-slate-100">
+            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">QR Code Viewer (MyQROnline)</h3>
+            <div class="flex flex-col items-center gap-3">
+                <div class="p-2 bg-white border border-slate-200 rounded-2xl shadow-sm inline-block">
+                    <!-- URL QR Code diambil langsung -->
+                    <img id="target-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fmyqronline.vercel.app%2Fredirect.html" class="w-32 h-32 object-contain" alt="QR Code">
+                </div>
+                <button id="download-qr" class="text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 px-5 py-2.5 rounded-full uppercase tracking-widest active:scale-95 transition-transform flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[16px]">download</span> Download QR
+                </button>
+            </div>
+        </div>
+
       </div>
       
+      <!-- Footer Button -->
       <div class="bg-white px-5 py-4 border-t border-slate-100 flex justify-end gap-3 sticky bottom-0">
         <button id="cancel-settings" class="px-5 py-2.5 text-[14px] font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Batal</button>
         <button id="save-settings" class="px-5 py-2.5 text-[14px] font-medium bg-[#0b57d0] text-white hover:bg-[#0842a0] rounded-xl transition-colors shadow-sm">Simpan</button>
@@ -245,7 +274,7 @@
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-    // Konfigurasi Firebase
+    // Konfigurasi Firebase (Milik Anda)
     const firebaseConfig = {
       apiKey: "AIzaSyBsdaCltUZPkg0kl7-BIY-xfbkTnypyfxM",
       authDomain: "qrpredictionwix.firebaseapp.com",
@@ -263,7 +292,6 @@
     // Kredensial AI & Default
     const GEMINI_API_KEY = "AIzaSyDitL95w9e9cLx1K3WirSWZqIABtLcNSp0";
     const DEFAULT_PROMPT = "lagu apa yang paling terkenal dari $searchKeyword? Jawab dengan direct tanpa penjelasan tambahan sedikitpun";
-
     const STORAGE_KEY = 'google_clone_history';
 
     // DOM Elements
@@ -284,6 +312,10 @@
     const siteBtns = document.querySelectorAll('.site-btn');
     const connIndicator = document.getElementById('connIndicator');
     const liveStatus = document.getElementById('live-status');
+    const sysConsole = document.getElementById('system-console');
+    const clearConsoleBtn = document.getElementById('clear-console-btn');
+    const downloadQrBtn = document.getElementById('download-qr');
+    const qrImg = document.getElementById('target-qr-img');
 
     // State
     let currentAIPrompt = localStorage.getItem('google_clone_ai_prompt') || DEFAULT_PROMPT;
@@ -291,7 +323,18 @@
     let searchHistory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let isFirebaseConnected = false;
 
-    // --- STATUS & AUTH FIREBASE ---
+    // --- CONSOLE LOGGER ---
+    function logToConsole(message) {
+      const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
+      sysConsole.innerHTML += `<br><span class="text-slate-500">[${time}]</span> ${message}`;
+      sysConsole.scrollTop = sysConsole.scrollHeight; // Auto scroll ke bawah
+    }
+
+    clearConsoleBtn.addEventListener('click', () => {
+      sysConsole.innerHTML = `&gt; Console cleared...`;
+    });
+
+    // --- LOGIKA STATUS & AUTH FIREBASE ---
     function setIndicator(status) {
       connIndicator.className = 'w-2.5 h-2.5 rounded-full transition-colors duration-300';
       if (status === 'online') connIndicator.classList.add('bg-green-500');
@@ -299,8 +342,12 @@
       else if (status === 'loading') connIndicator.classList.add('bg-yellow-400', 'pulse-dot');
     }
 
+    logToConsole("Initializing Firebase Auth...");
     setIndicator('loading');
-    signInAnonymously(auth).catch(() => {
+    signInAnonymously(auth).then(() => {
+      logToConsole("Firebase Auth: Success (Anonymous)");
+    }).catch((e) => {
+      logToConsole(`<span class="text-red-400">Firebase Auth Error: ${e.message}</span>`);
       liveStatus.textContent = "Offline (Autentikasi Gagal)";
       setIndicator('offline');
     });
@@ -312,12 +359,36 @@
             isFirebaseConnected = true;
             setIndicator('online');
             liveStatus.textContent = "Terhubung secara real-time";
+            logToConsole("Database: Connected to Realtime DB.");
           } else {
             isFirebaseConnected = false;
             setIndicator('offline');
             liveStatus.textContent = "Terputus";
+            logToConsole(`<span class="text-red-400">Database: Disconnected.</span>`);
           }
         });
+      }
+    });
+
+    // --- DOWNLOAD QR CODE LOGIC ---
+    downloadQrBtn.addEventListener('click', async () => {
+      try {
+        logToConsole("Downloading QR Code...");
+        const response = await fetch(qrImg.src);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'MyQROnline_Target.png';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        logToConsole("QR Code downloaded successfully.");
+      } catch (err) {
+        logToConsole(`<span class="text-yellow-400">Download failed, opening in new tab...</span>`);
+        window.open(qrImg.src, '_blank');
       }
     });
 
@@ -396,6 +467,7 @@
         updateSiteUI(selectedSite);
         settingsModal.classList.remove('hidden');
         settingsModal.classList.add('flex');
+        logToConsole("Settings Modal opened via triple click.");
       }
     });
 
@@ -408,13 +480,14 @@
       currentAIPrompt = getPromptString() || DEFAULT_PROMPT;
       localStorage.setItem('google_clone_ai_prompt', currentAIPrompt);
       localStorage.setItem('google_clone_target_site', selectedSite);
+      logToConsole(`Settings saved. Site: ${selectedSite}`);
       closeSettingsModal();
     });
 
     document.getElementById('cancel-settings').addEventListener('click', closeSettingsModal);
     document.getElementById('closeSettingsModal').addEventListener('click', closeSettingsModal);
 
-    // --- LOGIKA PENCARIAN & SMART REDIRECT ---
+    // --- LOGIKA PENCARIAN, FIREBASE & GEMINI API ---
     function saveToHistory(query) {
       if (!query.trim()) return;
       searchHistory = searchHistory.filter(item => item !== query); 
@@ -424,6 +497,7 @@
     }
 
     async function fetchGeminiAPI(query) {
+      logToConsole(`Sending "${query}" to Gemini API...`);
       try {
         const finalPrompt = currentAIPrompt.replace(/\$searchKeyword/g, query);
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
@@ -448,16 +522,20 @@
             text = lines[lines.length - 1]; 
           }
           text = text.replace(/^["']|["']$/g, '');
+          logToConsole(`Gemini API Success: "${text}"`);
           return text.trim();
         }
+        logToConsole(`<span class="text-red-400">Gemini Error: Format data tidak dikenali.</span>`);
         return null;
       } catch (error) {
+        logToConsole(`<span class="text-red-400">Gemini Fetch Failed: ${error.message}</span>`);
         return null; 
       }
     }
 
     async function executeSearch(query) {
       saveToHistory(query);
+      logToConsole(`Executing search for: "${query}"`);
       
       // Tampilkan UI Loading
       activeInput.blur(); 
@@ -475,35 +553,34 @@
       // Jalankan AI Call
       let aiResponse = await fetchGeminiAPI(query);
       if (!aiResponse) {
-        aiResponse = query; // Fallback ke kata kunci asli jika AI gagal
+        aiResponse = query; // Fallback
+        logToConsole(`<span class="text-yellow-400">Using fallback (original query) instead of AI response.</span>`);
       }
       
       if (isFirebaseConnected) {
         try {
-          // SMART REDIRECT: Buat Promise yang akan resolve JIKA Firebase selesai menyinkronkan data ke server
+          logToConsole("Syncing to Firebase DB...");
           const firebaseTask = Promise.all([
             set(ref(db, 'predictions/input'), aiResponse),
             set(ref(db, 'predictions/site'), selectedSite)
           ]);
           
-          // SAFETY NET: Buat Timer batas maksimal (2.5 detik)
           const timeoutTask = new Promise((resolve) => setTimeout(resolve, 2500, 'timeout'));
-          
-          // Lomba/Race: Siapa yang selesai lebih dulu (Firebase vs Timeout)
           const raceResult = await Promise.race([firebaseTask, timeoutTask]);
           
           if (raceResult === 'timeout') {
-             console.warn("Internet lambat: Force redirect.");
+             logToConsole(`<span class="text-yellow-400">Warning: Firebase write timed out. Forcing redirect.</span>`);
+          } else {
+             logToConsole("Firebase Sync Complete. Redirecting...");
           }
           
-          // Redirect seketika setelah server menerima atau timeout tercapai (tanpa hard delay)
           window.location.href = targetUrl;
         } catch (error) {
-          console.error("Gagal sinkronisasi DB:", error);
-          window.location.href = targetUrl; // Tetap pindah halaman walau error
+          logToConsole(`<span class="text-red-400">Firebase DB Write Error: ${error.message}</span>`);
+          window.location.href = targetUrl; // Tetap pindah
         }
       } else {
-        // Jika status offline, langsung redirect tanpa menunggu
+        logToConsole(`<span class="text-yellow-400">Firebase offline. Redirecting immediately.</span>`);
         window.location.href = targetUrl;
       }
     }
