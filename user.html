@@ -233,14 +233,14 @@
           <p id="live-status" class="text-sm font-medium text-slate-700 ml-[18px]">Menghubungkan...</p>
         </div>
 
-        <!-- Console Log Baru -->
+        <!-- Console Log -->
         <div class="space-y-2 mt-4">
           <div class="flex justify-between items-center">
              <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">System Console</h3>
-             <button id="clear-console-btn" class="text-[10px] text-slate-500 hover:text-slate-800 font-semibold uppercase tracking-wider bg-slate-100 px-2 py-1 rounded">Clear</button>
+             <button id="clear-console-btn" class="text-[10px] text-slate-500 hover:text-slate-800 font-semibold uppercase tracking-wider bg-slate-100 px-2 py-1 rounded transition-colors active:scale-95">Clear</button>
           </div>
           <div id="system-console" class="w-full h-32 bg-[#1e1e1e] text-[#4ade80] font-mono text-[11px] p-3 rounded-xl overflow-y-auto break-words shadow-inner leading-relaxed">
-              &gt; System initialized...
+              <!-- Logs rendered here -->
           </div>
         </div>
 
@@ -293,6 +293,8 @@
     const GEMINI_API_KEY = "AIzaSyDitL95w9e9cLx1K3WirSWZqIABtLcNSp0";
     const DEFAULT_PROMPT = "lagu apa yang paling terkenal dari $searchKeyword? Jawab dengan direct tanpa penjelasan tambahan sedikitpun";
     const STORAGE_KEY = 'google_clone_history';
+    const CONSOLE_STORAGE_KEY = 'google_clone_console_logs';
+    const ONE_HOUR_MS = 60 * 60 * 1000; // 1 Jam dalam milidetik
 
     // DOM Elements
     const activeInput = document.getElementById('active-search-input');
@@ -321,18 +323,47 @@
     let currentAIPrompt = localStorage.getItem('google_clone_ai_prompt') || DEFAULT_PROMPT;
     let selectedSite = localStorage.getItem('google_clone_target_site') || 'google';
     let searchHistory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    let consoleLogs = JSON.parse(localStorage.getItem(CONSOLE_STORAGE_KEY)) || [];
     let isFirebaseConnected = false;
 
-    // --- CONSOLE LOGGER ---
-    function logToConsole(message) {
-      const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
-      sysConsole.innerHTML += `<br><span class="text-slate-500">[${time}]</span> ${message}`;
+    // --- CONSOLE LOGGER (DENGAN LOCAL STORAGE & CLEANUP) ---
+    function cleanOldLogs() {
+      const now = Date.now();
+      consoleLogs = consoleLogs.filter(log => (now - log.timestamp) < ONE_HOUR_MS);
+      localStorage.setItem(CONSOLE_STORAGE_KEY, JSON.stringify(consoleLogs));
+    }
+
+    function renderConsole() {
+      cleanOldLogs();
+      if (consoleLogs.length === 0) {
+        sysConsole.innerHTML = `&gt; System initialized...`;
+      } else {
+        sysConsole.innerHTML = consoleLogs.map(log => `<div class="mb-1">${log.text}</div>`).join('');
+      }
       sysConsole.scrollTop = sysConsole.scrollHeight; // Auto scroll ke bawah
     }
 
+    function logToConsole(message) {
+      const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
+      const formattedMessage = `<span class="text-slate-500">[${time}]</span> ${message}`;
+      
+      consoleLogs.push({
+        text: formattedMessage,
+        timestamp: Date.now()
+      });
+      
+      renderConsole();
+    }
+
     clearConsoleBtn.addEventListener('click', () => {
-      sysConsole.innerHTML = `&gt; Console cleared...`;
+      consoleLogs = [];
+      localStorage.removeItem(CONSOLE_STORAGE_KEY);
+      renderConsole();
+      logToConsole("Console cleared.");
     });
+
+    // Inisialisasi awal render console
+    renderConsole();
 
     // --- LOGIKA STATUS & AUTH FIREBASE ---
     function setIndicator(status) {
