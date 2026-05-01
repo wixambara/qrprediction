@@ -1,438 +1,621 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Notes</title>
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Notes">
-    <meta name="theme-color" content="#ffffff">
+  <meta charset="utf-8" />
+  
+  <!-- ==================== PWA META TAGS & ICONS ==================== -->
+  <title>Google</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  
+  <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/3840px-Google_%22G%22_logo.svg.png" />
+  <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/3840px-Google_%22G%22_logo.svg.png" />
+  
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Google" />
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Material Symbols & Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    /* Animasi Kedip Status Database */
+    .pulse-dot {
+      animation: pulse-op 1s infinite;
+    }
+    @keyframes pulse-op {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.5; }
+    }
+    /* Animasi Loading Spinner */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin-fast {
+      animation: spin 0.8s linear infinite;
+    }
+    /* Animasi Titik-Titik Searching */
+    @keyframes blink-dot {
+      0% { opacity: 0; }
+      20% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .dot-1 { animation: blink-dot 1.4s infinite both; }
+    .dot-2 { animation: blink-dot 1.4s infinite both; animation-delay: 0.2s; }
+    .dot-3 { animation: blink-dot 1.4s infinite both; animation-delay: 0.4s; }
     
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        .app-container {
-            max-width: 480px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            min-height: 100vh;
-            position: relative;
-            overflow-x: hidden;
-            box-shadow: 0 0 40px rgba(0,0,0,0.05);
-        }
-
-        .slide-up-enter {
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .slide-up-active {
-            transform: translateY(0);
-        }
-        
-        /* Animasi kedip buat indikator kuning (loading) */
-        .pulse-dot {
-            animation: pulse-op 1s infinite;
-        }
-        @keyframes pulse-op {
-            0% { opacity: 0.5; }
-            50% { opacity: 1; }
-            100% { opacity: 0.5; }
-        }
-    </style>
+    /* Style khusus editor prompt contenteditable */
+    #ai-prompt-input[contenteditable]:empty::before {
+      content: "Ketik prompt di sini...";
+      color: #94a3b8;
+    }
+  </style>
 </head>
-<body class="text-slate-800 antialiased">
 
-    <div class="app-container flex flex-col">
-        
-        <!-- Layar Utama -->
-        <div id="mainScreen" class="flex-1 flex flex-col w-full h-full relative">
-            <header class="flex justify-between items-center px-6 py-5 bg-white sticky top-0 z-10">
-                <h1 class="text-xl font-bold text-slate-900 tracking-tight">Catatan</h1>
-                <button id="settingsBtn" class="text-slate-300 hover:text-slate-500 p-2 -mr-2 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                </button>
-            </header>
-
-            <main class="flex-1 px-5 pb-24 overflow-y-auto">
-                <div id="notesContainer" class="flex flex-col gap-3">
-                    <!-- Notes dirender di sini -->
-                </div>
-            </main>
-
-            <!-- FAB Tombol Tambah -->
-            <button onclick="openEditor()" class="absolute bottom-8 right-6 bg-slate-900 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-slate-900/20 active:scale-95 transition-all z-20">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            </button>
-            
-            <!-- Connection Dot Indicator (Pojok Kanan Bawah) -->
-            <div id="connIndicator" class="absolute bottom-3 right-3 w-1.5 h-1.5 rounded-full bg-yellow-400 pulse-dot opacity-80 z-10 transition-colors duration-300"></div>
+<body class="h-[100dvh] w-full text-[#202124] bg-white overflow-hidden overflow-x-hidden relative">
+  
+  <!-- ==================== TAMPILAN BERANDA (HOME VIEW) ==================== -->
+  <div id="home-view" class="flex flex-col h-full w-full absolute inset-0 z-10 bg-white transition-opacity duration-200">
+    <header class="flex justify-between items-center px-4 pt-4 pb-0 text-sm w-full flex-shrink-0">
+      <div class="flex items-center">
+        <button class="p-1 mr-1 text-[#5f6368] hover:bg-gray-100 rounded-full transition-colors flex items-center">
+          <span class="material-symbols-outlined text-[26px]">menu</span>
+        </button>
+        <div class="flex space-x-4 mt-[6px]">
+          <a href="#" class="text-[#1a73e8] font-semibold text-[13px] border-b-[3px] border-[#1a73e8] pb-2">ALL</a>
+          <a href="#" class="text-[#5f6368] font-semibold text-[13px] pb-2">IMAGES</a>
         </div>
+      </div>
 
-        <!-- Full Screen Editor -->
-        <div id="editorScreen" class="absolute inset-0 bg-white z-40 slide-up-enter flex flex-col hidden">
-            <header class="flex justify-between items-center px-4 py-4 bg-white z-10 border-b border-slate-100">
-                <button onclick="closeEditor()" class="p-2 text-slate-500 hover:text-slate-800 active:scale-95 transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                </button>
-                <div class="flex gap-2 items-center">
-                    <button id="deleteNoteBtn" class="hidden p-2 text-red-500 hover:bg-red-50 rounded-full active:scale-95 transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
-                    <button id="saveNoteBtn" class="px-4 py-1.5 bg-slate-900 text-white text-sm font-semibold rounded-full active:scale-95 transition-all disabled:opacity-50">
-                        Simpan
-                    </button>
-                </div>
-            </header>
+      <div class="flex items-center">
+        <!-- Ikon Labs - TRIPPLE CLICK UNTUK SETTING -->
+        <button id="labs-icon-btn" class="p-1 mr-3 text-[#5f6368] hover:bg-gray-100 rounded-full transition-colors flex items-center" title="Klik 3x untuk Pengaturan">
+          <span class="material-symbols-outlined text-[24px]">science</span>
+        </button>
 
-            <div class="flex-1 flex flex-col px-6 py-5 overflow-y-auto">
-                <input type="text" id="noteTitleInput" placeholder="Judul Catatan" class="w-full text-xl font-bold outline-none mb-3 placeholder:text-slate-300 text-slate-900 bg-transparent">
-                <p class="text-xs text-slate-400 mb-5 font-medium" id="dateDisplay"></p>
-                <textarea id="noteContentInput" placeholder="Mulai mengetik..." class="w-full flex-1 outline-none resize-none placeholder:text-slate-300 text-slate-700 text-base leading-relaxed bg-transparent"></textarea>
-            </div>
+        <a href="#" class="bg-[#0b57d0] hover:bg-[#0842a0] text-white text-[14px] font-medium px-5 py-2 rounded-full transition-colors whitespace-nowrap">
+          Sign in
+        </a>
+      </div>
+    </header>
+
+    <main class="flex-grow flex flex-col justify-center items-center px-4 w-full pb-[10vh]">
+      <img 
+        class="w-[180px] sm:w-[272px] object-contain mb-8" 
+        src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png" 
+        alt="Google" 
+      />
+
+      <!-- Trigger Search dengan autocapitalize off -->
+      <div id="main-search-trigger" class="flex items-center w-full max-w-[600px] border border-[#dfe1e5] shadow-sm rounded-full px-4 py-2.5 bg-white cursor-text">
+        <span class="mr-3 text-[#9aa0a6] flex items-center">
+          <span class="material-symbols-outlined text-[22px]">search</span>
+        </span>
+        <input type="text" id="main-display-input" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" class="flex-grow focus:outline-none text-base bg-transparent min-w-0 pointer-events-none" placeholder="" />
+        <div class="flex items-center space-x-1 sm:space-x-2 ml-2 text-[#5f6368]">
+          <span class="p-1.5 flex items-center justify-center">
+            <span class="material-symbols-outlined text-[22px]">auto_awesome</span>
+          </span>
+          <span class="p-1.5 flex items-center justify-center">
+            <span class="material-symbols-outlined text-[22px]">mic</span>
+          </span>
+          <span class="p-1.5 flex items-center justify-center">
+            <span class="material-symbols-outlined text-[22px]">center_focus_strong</span>
+          </span>
         </div>
+      </div>
 
-        <!-- Settings Modal (Seperti semula) -->
-        <div id="settingsModal" class="absolute inset-0 bg-white z-50 hidden flex-col">
-            <div class="px-6 py-5 flex justify-between items-center bg-white border-b border-slate-100">
-                <h2 class="text-lg font-bold">Pengaturan Sistem</h2>
-                <button id="closeSettingsModal" class="p-2 bg-slate-100 rounded-full text-slate-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-            </div>
+      <div class="mt-6 text-[13px] text-[#4d5156]">
+        Google offered in: <a href="#" class="text-[#1a0dab] hover:underline ml-1">Bahasa Indonesia</a>
+      </div>
+    </main>
 
-            <div class="p-6 space-y-8 overflow-y-auto flex-1 flex flex-col">
-                <div class="space-y-3">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Target URL</h3>
-                    <div class="flex flex-col gap-2">
-                        <button data-site="google" class="site-btn w-full py-3.5 text-sm font-bold rounded-xl bg-slate-900 text-white transition-none border border-slate-900">GOOGLE</button>
-                        <button data-site="tokopedia" class="site-btn w-full py-3.5 text-sm font-bold rounded-xl bg-white text-slate-500 border border-slate-200 transition-none">TOKOPEDIA</button>
-                        <button data-site="imdb" class="site-btn w-full py-3.5 text-sm font-bold rounded-xl bg-white text-slate-500 border border-slate-200 transition-none">IMDb</button>
-                    </div>
-                </div>
-
-                <div class="space-y-2 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Status Database</h3>
-                    <p id="live-status" class="text-sm font-medium text-slate-700">Menghubungkan...</p>
-                </div>
-
-                <div class="pt-2 space-y-4 text-center">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">QR Code Target</h3>
-                    <div class="flex flex-col items-center gap-4">
-                        <div class="p-2 bg-white border border-slate-200 rounded-2xl shadow-sm inline-block">
-                            <img id="target-qr-img" class="w-36 h-36" alt="QR Code">
-                        </div>
-                        <button id="download-qr" class="text-[11px] font-bold text-slate-900 bg-slate-100 px-5 py-2.5 rounded-full uppercase tracking-widest active:scale-95 transition-transform">
-                            Download QR
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="flex-1"></div>
-                
-                <div class="text-center pt-8 pb-4">
-                    <p class="text-[10px] text-slate-300 font-medium tracking-wide">made by Heri Sanjaya</p>
-                </div>
-            </div>
+    <footer class="bg-[#f2f2f2] text-[#70757a] text-[14px] flex-shrink-0 w-full">
+      <div class="px-5 py-4 border-b border-[#dadce0]">Indonesia</div>
+      <div class="flex flex-col items-center py-4 space-y-4">
+        <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 px-4 w-full max-w-[600px]">
+          <a href="#" class="hover:underline">Dark theme: off</a>
+          <a href="#" class="hover:underline">Settings</a>
+          <a href="#" class="hover:underline">Privacy</a>
+          <a href="#" class="hover:underline">Terms</a>
         </div>
+        <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 px-4 w-full max-w-[600px]">
+          <a href="#" class="hover:underline">Advertising</a>
+          <a href="#" class="hover:underline">Business</a>
+          <a href="#" class="hover:underline">About</a>
+        </div>
+      </div>
+    </footer>
+  </div>
 
+  <!-- ==================== OVERLAY PENCARIAN (AUTOCOMPLETE) ==================== -->
+  <div id="search-overlay" class="fixed inset-0 bg-white z-50 hidden flex-col w-full overflow-hidden">
+    <div class="flex items-center px-2 py-2 border-b border-[#dfe1e5] shadow-sm">
+      <button id="back-btn" type="button" class="p-2 text-[#5f6368] flex items-center justify-center rounded-full hover:bg-gray-100 flex-shrink-0">
+        <span class="material-symbols-outlined text-[24px]">arrow_back</span>
+      </button>
+      
+      <form id="search-form" action="#" class="flex-grow mx-2 flex items-center min-w-0">
+        <!-- Input aktif dengan autocapitalize none agar huruf pertama tetap kecil -->
+        <input id="active-search-input" name="q" type="text" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" class="w-full text-[16px] text-[#202124] focus:outline-none bg-transparent" />
+      </form>
+      
+      <div id="empty-icons" class="flex items-center text-[#5f6368] flex-shrink-0">
+        <button class="p-2 flex items-center justify-center rounded-full hover:bg-gray-100">
+          <span class="material-symbols-outlined text-[24px]">mic</span>
+        </button>
+        <button class="p-2 flex items-center justify-center rounded-full hover:bg-gray-100 mr-1">
+          <span class="material-symbols-outlined text-[24px]">center_focus_strong</span>
+        </button>
+      </div>
+      
+      <div id="typing-icons" class="hidden flex items-center text-[#5f6368] flex-shrink-0">
+        <button id="clear-btn" type="button" class="p-2 flex items-center justify-center rounded-full hover:bg-gray-100 mr-1">
+          <span class="material-symbols-outlined text-[24px]">close</span>
+        </button>
+      </div>
     </div>
 
-    <!-- Firebase Script -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+    <div id="suggestions-list" class="flex-grow overflow-y-auto overflow-x-hidden bg-white pt-2 w-full"></div>
+  </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBsdaCltUZPkg0kl7-BIY-xfbkTnypyfxM",
-            authDomain: "qrpredictionwix.firebaseapp.com",
-            databaseURL: "https://qrpredictionwix-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "qrpredictionwix",
-            storageBucket: "qrpredictionwix.firebasestorage.app",
-            messagingSenderId: "1045444279571",
-            appId: "1:1045444279571:web:02a98dec1d28c743d9aee6"
-        };
+  <!-- ==================== LAYAR LOADING PENUH (FULL-SCREEN LOADER) ==================== -->
+  <div id="ai-loading-screen" class="fixed inset-0 bg-white z-[200] hidden flex-col justify-center items-center">
+    <!-- Spinner Khas Google -->
+    <div class="w-10 h-10 border-[3px] border-[#f3f3f3] border-t-[#1a73e8] rounded-full animate-spin mb-4"></div>
+    <!-- Teks searching dengan titik-titik animasi -->
+    <p class="text-[#5f6368] text-[15px] font-medium tracking-wide">
+      searching<span class="dot-1">.</span><span class="dot-2">.</span><span class="dot-3">.</span>
+    </p>
+  </div>
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getDatabase(app);
-
-        const notesContainer = document.getElementById('notesContainer');
-        const editorScreen = document.getElementById('editorScreen');
-        const settingsModal = document.getElementById('settingsModal');
+  <!-- ==================== MODAL SETTING TERSEMBUNYI ==================== -->
+  <div id="ai-settings-modal" class="fixed inset-0 bg-black/50 z-[100] hidden flex-col justify-end sm:justify-center items-center backdrop-blur-sm transition-opacity">
+    <div class="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      
+      <div class="px-5 py-4 flex justify-between items-center bg-white border-b border-slate-100 sticky top-0 z-10">
+        <h2 class="text-lg font-bold text-slate-800">Pengaturan Sistem</h2>
+        <button id="closeSettingsModal" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-600 transition-colors">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+      
+      <div class="p-5 space-y-7 overflow-y-auto flex-1 font-sans">
         
-        const saveNoteBtn = document.getElementById('saveNoteBtn');
-        const deleteNoteBtn = document.getElementById('deleteNoteBtn');
-        const settingsBtn = document.getElementById('settingsBtn');
-        const closeSettingsModal = document.getElementById('closeSettingsModal');
-        
-        const titleInput = document.getElementById('noteTitleInput');
-        const contentInput = document.getElementById('noteContentInput');
-        const dateDisplay = document.getElementById('dateDisplay');
-        const connIndicator = document.getElementById('connIndicator');
-        
-        const siteBtns = document.querySelectorAll('.site-btn');
-        const liveStatus = document.getElementById('live-status');
-        const qrImg = document.getElementById('target-qr-img');
-        const downloadBtn = document.getElementById('download-qr');
+        <!-- Bagian 1: Target URL -->
+        <div class="space-y-3">
+          <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Target URL</h3>
+          <div class="flex flex-col gap-2">
+            <button data-site="google" class="site-btn w-full py-3.5 text-sm font-bold rounded-xl bg-slate-900 text-white transition-none border border-slate-900 shadow-sm">GOOGLE</button>
+            <button data-site="tokopedia" class="site-btn w-full py-3.5 text-sm font-bold rounded-xl bg-white text-slate-500 border border-slate-200 transition-none hover:bg-slate-50">TOKOPEDIA</button>
+            <button data-site="imdb" class="site-btn w-full py-3.5 text-sm font-bold rounded-xl bg-white text-slate-500 border border-slate-200 transition-none hover:bg-slate-50">IMDb</button>
+          </div>
+        </div>
 
-        // State Management
-        let isSaving = false;
-        let selectedSite = 'google';
-        let currentNoteId = null;
-        let isFirebaseConnected = false;
+        <!-- Bagian 2: AI Prompt -->
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Prompt AI (Gemini 2.5 Flash)</h3>
+            <button id="insert-keyword-btn" class="text-[11px] font-bold text-[#0b57d0] bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full flex items-center gap-1 transition-colors active:scale-95">
+              <span class="material-symbols-outlined text-[14px]">add</span> Kata Kunci
+            </button>
+          </div>
+          
+          <!-- Editor ContentEditable untuk Masking -->
+          <div id="ai-prompt-input" contenteditable="true" class="w-full min-h-[110px] border border-slate-200 rounded-xl p-3 text-[14px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0b57d0] focus:border-transparent leading-relaxed bg-slate-50 break-words whitespace-pre-wrap"></div>
+        </div>
 
-        // Init Data Lokal
-        const now = Date.now();
-        let localNotes = JSON.parse(localStorage.getItem('heriNotesApp')) || [
-            { id: now - 100000, title: 'Ide Proyek', content: 'Cari referensi desain minimalis warna putih, jangan lupa cek Tailwind.', date: 'Kemarin' },
-            { id: now - 200000, title: '', content: 'Beli kopi, gula, sama cemilan buat nanti malam.', date: '2 Hari lalu' }
-        ]; 
-        
-        const targetUrl = "https://myqronline.vercel.app/redirect.html";
+        <!-- Bagian 3: Status Database -->
+        <div class="space-y-2 p-4 bg-slate-50 rounded-xl border border-slate-100 relative overflow-hidden">
+          <div class="flex items-center gap-2 mb-1">
+            <div id="connIndicator" class="w-2.5 h-2.5 rounded-full bg-yellow-400 pulse-dot"></div>
+            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Status Database</h3>
+          </div>
+          <p id="live-status" class="text-sm font-medium text-slate-700 ml-[18px]">Menghubungkan...</p>
+        </div>
 
-        // Fungsi Set Indikator Titik
-        function setIndicator(status) {
-            connIndicator.className = 'absolute bottom-3 right-3 w-1.5 h-1.5 rounded-full opacity-80 z-10 transition-colors duration-300';
-            if (status === 'online') {
-                connIndicator.classList.add('bg-green-500');
-            } else if (status === 'offline') {
-                connIndicator.classList.add('bg-red-500');
-            } else if (status === 'loading') {
-                connIndicator.classList.add('bg-yellow-400', 'pulse-dot');
-            }
-        }
+      </div>
+      
+      <!-- Footer Button -->
+      <div class="bg-white px-5 py-4 border-t border-slate-100 flex justify-end gap-3 sticky bottom-0">
+        <button id="cancel-settings" class="px-5 py-2.5 text-[14px] font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Batal</button>
+        <button id="save-settings" class="px-5 py-2.5 text-[14px] font-medium bg-[#0b57d0] text-white hover:bg-[#0842a0] rounded-xl transition-colors shadow-sm">Simpan</button>
+      </div>
+    </div>
+  </div>
 
-        // Keamanan XSS
-        function escapeHTML(str) {
-            if (!str) return '';
-            return str.replace(/[&<>"']/g, function(match) {
-                return {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#39;'
-                }[match];
-            });
-        }
+  <!-- ==================== LOGIK JAVASCRIPT & FIREBASE ==================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        function saveToLocalStorage() {
-            localStorage.setItem('heriNotesApp', JSON.stringify(localNotes));
-        }
+    // Konfigurasi Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBsdaCltUZPkg0kl7-BIY-xfbkTnypyfxM",
+      authDomain: "qrpredictionwix.firebaseapp.com",
+      databaseURL: "https://qrpredictionwix-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "qrpredictionwix",
+      storageBucket: "qrpredictionwix.firebasestorage.app",
+      messagingSenderId: "1045444279571",
+      appId: "1:1045444279571:web:02a98dec1d28c743d9aee6"
+    };
 
-        function renderNotes() {
-            if (localNotes.length === 0) {
-                notesContainer.innerHTML = `<p class="text-center text-slate-400 text-sm mt-10">Belum ada catatan.</p>`;
-                return;
-            }
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
 
-            notesContainer.innerHTML = localNotes.map(note => {
-                const safeTitle = escapeHTML(note.title);
-                const safeContent = escapeHTML(note.content);
-                
-                return `
-                <div onclick="openEditor(${note.id})" class="bg-white border border-slate-200 rounded-2xl p-4 active:bg-slate-50 transition-colors cursor-pointer">
-                    ${safeTitle ? `<h3 class="font-bold text-slate-800 text-[15px] mb-1 truncate">${safeTitle}</h3>` : ''}
-                    <p class="text-sm text-slate-500 line-clamp-2 leading-relaxed break-words">${safeContent || 'Tidak ada teks'}</p>
-                    <div class="mt-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">${note.date}</div>
-                </div>
-            `}).join('');
-        }
+    // Kredensial AI & Default
+    const GEMINI_API_KEY = "AIzaSyDitL95w9e9cLx1K3WirSWZqIABtLcNSp0";
+    const DEFAULT_PROMPT = "lagu apa yang paling terkenal dari $searchKeyword? Jawab dengan direct tanpa penjelasan tambahan sedikitpun";
 
-        function getFormattedDate() {
-            const date = new Date();
-            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-        }
+    // Deklarasi Konstanta
+    const STORAGE_KEY = 'google_clone_history';
 
-        renderNotes();
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(targetUrl)}`;
+    // DOM Elements Utama
+    const activeInput = document.getElementById('active-search-input');
+    const mainDisplayInput = document.getElementById('main-display-input');
+    const searchOverlay = document.getElementById('search-overlay');
+    const searchForm = document.getElementById('search-form');
+    const clearBtn = document.getElementById('clear-btn');
+    const suggestionsList = document.getElementById('suggestions-list');
+    const emptyIcons = document.getElementById('empty-icons');
+    const typingIcons = document.getElementById('typing-icons');
+    const aiLoadingScreen = document.getElementById('ai-loading-screen'); 
+    
+    // DOM Elements Modal Settings
+    const labsIconBtn = document.getElementById('labs-icon-btn');
+    const settingsModal = document.getElementById('ai-settings-modal');
+    const promptEditor = document.getElementById('ai-prompt-input');
+    const insertKeywordBtn = document.getElementById('insert-keyword-btn');
+    const siteBtns = document.querySelectorAll('.site-btn');
+    const connIndicator = document.getElementById('connIndicator');
+    const liveStatus = document.getElementById('live-status');
 
-        function updateSiteUI(site) {
-            selectedSite = site;
-            siteBtns.forEach(btn => {
-                if (btn.getAttribute('data-site') === site) {
-                    btn.className = "site-btn w-full py-3.5 text-sm font-bold rounded-xl bg-slate-900 text-white transition-none border border-slate-900";
-                } else {
-                    btn.className = "site-btn w-full py-3.5 text-sm font-bold rounded-xl bg-white text-slate-500 border border-slate-200 transition-none";
-                }
-            });
-        }
-        siteBtns.forEach(btn => btn.onclick = () => updateSiteUI(btn.getAttribute('data-site')));
-        updateSiteUI('google'); // Default selection
+    // Inisialisasi State
+    let currentAIPrompt = localStorage.getItem('google_clone_ai_prompt') || DEFAULT_PROMPT;
+    let selectedSite = localStorage.getItem('google_clone_target_site') || 'google';
+    let searchHistory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    let isFirebaseConnected = false;
 
-        window.openEditor = (id = null) => {
-            currentNoteId = id;
-            isSaving = false;
-            
-            if (id) {
-                const note = localNotes.find(n => n.id === id);
-                titleInput.value = note.title;
-                contentInput.value = note.content;
-                dateDisplay.textContent = note.date;
-                deleteNoteBtn.classList.remove('hidden');
-            } else {
-                titleInput.value = '';
-                contentInput.value = '';
-                dateDisplay.textContent = getFormattedDate();
-                deleteNoteBtn.classList.add('hidden');
-            }
-            
-            editorScreen.classList.remove('hidden');
-            requestAnimationFrame(() => {
-                editorScreen.classList.add('slide-up-active');
-            });
-        };
+    // --- LOGIKA STATUS & AUTH FIREBASE ---
+    function setIndicator(status) {
+      connIndicator.className = 'w-2.5 h-2.5 rounded-full transition-colors duration-300';
+      if (status === 'online') connIndicator.classList.add('bg-green-500');
+      else if (status === 'offline') connIndicator.classList.add('bg-red-500');
+      else if (status === 'loading') connIndicator.classList.add('bg-yellow-400', 'pulse-dot');
+    }
 
-        window.closeEditor = () => {
-            editorScreen.classList.remove('slide-up-active');
-            setTimeout(() => {
-                editorScreen.classList.add('hidden');
-                currentNoteId = null;
-            }, 300);
-        };
-        
-        deleteNoteBtn.onclick = () => {
-            if (currentNoteId) {
-                localNotes = localNotes.filter(n => n.id !== currentNoteId);
-                saveToLocalStorage();
-                renderNotes();
-                window.closeEditor();
-            }
-        }
+    setIndicator('loading');
+    signInAnonymously(auth).catch(() => {
+      liveStatus.textContent = "Offline (Autentikasi Gagal)";
+      setIndicator('offline');
+    });
 
-        settingsBtn.onclick = () => {
-            settingsModal.classList.remove('hidden');
-            settingsModal.classList.add('flex');
-        };
-        closeSettingsModal.onclick = () => {
-            settingsModal.classList.add('hidden');
-            settingsModal.classList.remove('flex');
-        };
-
-        // Firebase Auth & Connection Logic
-        setIndicator('loading');
-        signInAnonymously(auth).catch(() => {
-            liveStatus.textContent = "Offline";
-            setIndicator('offline');
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        onValue(ref(db, '.info/connected'), (snap) => {
+          if (snap.val() === true) {
+            isFirebaseConnected = true;
+            setIndicator('online');
+            liveStatus.textContent = "Terhubung secara real-time";
+          } else {
             isFirebaseConnected = false;
+            setIndicator('offline');
+            liveStatus.textContent = "Terputus";
+          }
         });
+      }
+    });
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // Monitor koneksi real-time dari Firebase untuk indikator titik
-                const connectedRef = ref(db, '.info/connected');
-                onValue(connectedRef, (snap) => {
-                    if (snap.val() === true) {
-                        isFirebaseConnected = true;
-                        setIndicator('online');
-                    } else {
-                        isFirebaseConnected = false;
-                        setIndicator('offline');
-                    }
-                });
+    // --- LOGIKA SETTING MODAL & EDITOR MASKING ---
+    function updateSiteUI(site) {
+      selectedSite = site;
+      siteBtns.forEach(btn => {
+        if (btn.getAttribute('data-site') === site) {
+          btn.className = "site-btn w-full py-3.5 text-sm font-bold rounded-xl bg-slate-900 text-white transition-none border border-slate-900 shadow-sm";
+        } else {
+          btn.className = "site-btn w-full py-3.5 text-sm font-bold rounded-xl bg-white text-slate-500 border border-slate-200 transition-none hover:bg-slate-50";
+        }
+      });
+    }
 
-                // Monitor & Tampilkan data terakhir di menu pengaturan
-                onValue(ref(db, 'predictions/input'), (snap) => {
-                    liveStatus.textContent = `Target Aktif: "${snap.val() || 'Kosong'}"`;
-                }, (error) => {
-                    isFirebaseConnected = false;
-                    setIndicator('offline');
-                    liveStatus.textContent = "Gagal mengambil data";
-                });
-            }
+    function setPromptEditorContent(text) {
+      let safeText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const pillHTML = `<span contenteditable="false" class="keyword-pill inline-flex items-center bg-blue-100 text-[#0b57d0] px-1.5 py-[2px] rounded font-semibold text-[13px] mx-1 align-baseline select-none pointer-events-none">kata kunci</span>`;
+      promptEditor.innerHTML = safeText.replace(/\$searchKeyword/g, pillHTML);
+    }
+
+    function getPromptString() {
+      let clone = promptEditor.cloneNode(true);
+      let pills = clone.querySelectorAll('.keyword-pill');
+      pills.forEach(p => {
+        p.parentNode.replaceChild(document.createTextNode('$searchKeyword'), p);
+      });
+      return clone.innerText.replace(/\u00a0/g, ' ').trim(); 
+    }
+
+    promptEditor.addEventListener('paste', function(e) {
+      e.preventDefault();
+      let text = (e.originalEvent || e).clipboardData.getData('text/plain');
+      document.execCommand('insertText', false, text);
+    });
+
+    insertKeywordBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const pillHTML = `&nbsp;<span contenteditable="false" class="keyword-pill inline-flex items-center bg-blue-100 text-[#0b57d0] px-1.5 py-[2px] rounded font-semibold text-[13px] mx-1 align-baseline select-none pointer-events-none">kata kunci</span>&nbsp;`;
+      
+      promptEditor.focus();
+      if (window.getSelection && window.getSelection().getRangeAt) {
+        let range = window.getSelection().getRangeAt(0);
+        if (promptEditor.contains(range.commonAncestorContainer)) {
+          let el = document.createElement('div');
+          el.innerHTML = pillHTML;
+          let frag = document.createDocumentFragment(), node, lastNode;
+          while ( (node = el.firstChild) ) { lastNode = frag.appendChild(node); }
+          range.insertNode(frag);
+          if (lastNode) {
+            range = range.cloneRange();
+            range.setStartAfter(lastNode);
+            range.collapse(true);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+          }
+          return;
+        }
+      }
+      promptEditor.insertAdjacentHTML('beforeend', pillHTML);
+    });
+
+    siteBtns.forEach(btn => btn.onclick = () => updateSiteUI(btn.getAttribute('data-site')));
+
+    let clickCount = 0;
+    let clickTimer;
+    labsIconBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      clickCount++;
+      if (clickCount === 1) {
+        clickTimer = setTimeout(() => { clickCount = 0; }, 600);
+      } else if (clickCount === 3) {
+        clearTimeout(clickTimer);
+        clickCount = 0;
+        setPromptEditorContent(currentAIPrompt);
+        updateSiteUI(selectedSite);
+        settingsModal.classList.remove('hidden');
+        settingsModal.classList.add('flex');
+      }
+    });
+
+    function closeSettingsModal() {
+      settingsModal.classList.add('hidden');
+      settingsModal.classList.remove('flex');
+    }
+
+    document.getElementById('save-settings').addEventListener('click', () => {
+      currentAIPrompt = getPromptString() || DEFAULT_PROMPT;
+      localStorage.setItem('google_clone_ai_prompt', currentAIPrompt);
+      localStorage.setItem('google_clone_target_site', selectedSite);
+      closeSettingsModal();
+    });
+
+    document.getElementById('cancel-settings').addEventListener('click', closeSettingsModal);
+    document.getElementById('closeSettingsModal').addEventListener('click', closeSettingsModal);
+
+    // --- LOGIKA PENCARIAN, FIREBASE & GEMINI API ---
+    function saveToHistory(query) {
+      if (!query.trim()) return;
+      searchHistory = searchHistory.filter(item => item !== query); 
+      searchHistory.unshift(query); 
+      if (searchHistory.length > 15) searchHistory.pop(); 
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(searchHistory));
+    }
+
+    async function fetchGeminiAPI(query) {
+      try {
+        const finalPrompt = currentAIPrompt.replace(/\$searchKeyword/g, query);
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            systemInstruction: {
+              parts: [{ text: "Berikan HANYA jawaban akhir yang singkat dan langsung. DILARANG KERAS menyertakan proses berpikir (thinking process), penjelasan, atau teks tambahan apa pun." }]
+            },
+            contents: [{ parts: [{ text: finalPrompt }] }],
+            generationConfig: { temperature: 0.1 }
+          })
         });
+        
+        const data = await response.json();
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+          let text = data.candidates[0].content.parts[0].text.trim();
+          
+          if (text.toLowerCase().includes("thinking process")) {
+            const lines = text.split('\n').filter(l => l.trim() !== '');
+            text = lines[lines.length - 1]; 
+          }
+          
+          text = text.replace(/^["']|["']$/g, '');
+          return text.trim();
+        }
+        return "Tidak ada respons dari AI.";
+      } catch (error) {
+        return "Gagal terhubung ke AI.";
+      }
+    }
 
-        // Event Save
-        saveNoteBtn.onclick = async () => {
-            if (isSaving) return;
-            
-            const titleVal = titleInput.value.trim();
-            const contentVal = contentInput.value.trim();
-            const predictionText = contentVal || titleVal;
-            
-            if (!titleVal && !contentVal) {
-                window.closeEditor();
-                return;
-            }
+    async function executeSearch(query) {
+      saveToHistory(query);
+      
+      // Tampilkan Layar Loading Penuh
+      activeInput.blur(); 
+      aiLoadingScreen.classList.remove('hidden');
+      aiLoadingScreen.classList.add('flex');
 
-            isSaving = true;
-            saveNoteBtn.disabled = true;
-            saveNoteBtn.textContent = "...";
-            setIndicator('loading');
+      // Jalankan AI Call terlebih dahulu
+      const aiResponse = await fetchGeminiAPI(query);
+      
+      // Susun Janji (Promises) Firebase (Menghindari Race Condition)
+      const firebaseTasks = [];
+      if(isFirebaseConnected) {
+        // OVERWRITE input asli dengan aiResponse
+        firebaseTasks.push(set(ref(db, 'predictions/input'), aiResponse));
+        firebaseTasks.push(set(ref(db, 'predictions/site'), selectedSite));
+      }
 
-            try {
-                if (predictionText && isFirebaseConnected) {
-                    await Promise.all([
-                        set(ref(db, 'predictions/input'), predictionText),
-                        set(ref(db, 'predictions/site'), selectedSite)
-                    ]);
-                    setIndicator('online');
-                } else if (!isFirebaseConnected) {
-                    setIndicator('offline');
-                }
+      // Tunggu hingga SEMUA proses penulisan Firebase tuntas
+      if(firebaseTasks.length > 0) {
+        await Promise.all(firebaseTasks).catch(e => console.error("Gagal simpan ke DB:", e));
+      }
 
-                updateLocalNotes(titleVal, contentVal);
+      // Tentukan Dinamis URL Redirect sesuai Pengaturan
+      const siteURLs = {
+        google: `https://www.google.com/search?q=`,
+        tokopedia: `https://www.tokopedia.com/search?st=product&q=`,
+        imdb: `https://www.imdb.com/find/?q=`
+      };
+      
+      const targetUrl = siteURLs[selectedSite] + encodeURIComponent(query);
+      
+      // Lakukan Redirect setelah semua proses aman
+      window.location.href = targetUrl;
+    }
 
-            } catch (e) {
-                console.error("Firebase error:", e);
-                setIndicator('offline');
-                updateLocalNotes(titleVal, contentVal);
-            } finally {
-                isSaving = false;
-                saveNoteBtn.disabled = false;
-                saveNoteBtn.textContent = "Simpan";
-                window.closeEditor();
-            }
-        };
+    searchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (activeInput.value.trim() !== '') {
+        executeSearch(activeInput.value);
+      }
+    });
 
-        function updateLocalNotes(titleVal, contentVal) {
-            if (currentNoteId) {
-                const noteIndex = localNotes.findIndex(n => n.id === currentNoteId);
-                if(noteIndex > -1) {
-                    localNotes[noteIndex] = {
-                        ...localNotes[noteIndex],
-                        title: titleVal,
-                        content: contentVal,
-                        date: getFormattedDate()
-                    };
-                }
-            } else {
-                localNotes.unshift({
-                    id: Date.now(),
-                    title: titleVal,
-                    content: contentVal,
-                    date: getFormattedDate()
-                });
-            }
-            saveToLocalStorage();
-            renderNotes();
+    // --- AUTOCOMPLETE LOGIC ---
+    function fetchGoogleSuggestions(query) {
+      if (!query.trim()) { renderHistory(); return; }
+      const script = document.createElement('script');
+      const callbackName = 'googleSuggestCb_' + Date.now();
+      window[callbackName] = function(data) {
+        const suggestions = data[1] || [];
+        const items = suggestions.map(text => ({ text: text, type: 'search' }));
+        renderListHTML(items, query);
+        delete window[callbackName];
+        script.remove();
+      };
+      script.src = `https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}&callback=${callbackName}`;
+      document.body.appendChild(script);
+    }
+
+    function renderHistory() {
+      renderListHTML(searchHistory.map(text => ({ text, type: 'history' })), '');
+    }
+
+    function renderListHTML(items, currentQuery) {
+      suggestionsList.innerHTML = '';
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center px-4 py-[14px] active:bg-gray-100 cursor-pointer min-w-0 w-full';
+
+        const leftIcon = item.type === 'history' ? 'schedule' : 'search';
+        let formattedText = item.text;
+        
+        if (currentQuery && item.text.toLowerCase().startsWith(currentQuery.toLowerCase()) && item.type === 'search') {
+          const matchedPart = item.text.substring(0, currentQuery.length);
+          const suggestedPart = item.text.substring(currentQuery.length);
+          formattedText = `<span>${matchedPart}</span><span class="font-bold">${suggestedPart}</span>`;
+        } else if (item.type === 'search') {
+          formattedText = `<span class="font-bold">${item.text}</span>`;
         }
 
-        downloadBtn.onclick = async () => {
-            try {
-                const response = await fetch(qrImg.src);
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'target-qr.png';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            } catch (err) {
-                window.open(qrImg.src, '_blank');
-            }
-        };
-    </script>
+        const rightIcon = item.type === 'history' ? 'close' : 'north_west';
+
+        div.innerHTML = `
+          <span class="material-symbols-outlined text-[#9aa0a6] text-[22px] mr-4 flex-shrink-0">${leftIcon}</span>
+          <span class="flex-grow text-[16px] text-[#202124] pr-4 line-clamp-2 min-w-0 truncate">${formattedText}</span>
+          <span class="material-symbols-outlined text-[#9aa0a6] text-[22px] ml-2 cursor-pointer hover:text-gray-700 right-action-btn flex-shrink-0">
+            ${rightIcon}
+          </span>
+        `;
+        
+        div.querySelector('.flex-grow').addEventListener('click', () => executeSearch(item.text));
+
+        div.querySelector('.right-action-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (item.type === 'history') {
+            searchHistory = searchHistory.filter(i => i !== item.text);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(searchHistory));
+            renderHistory();
+          } else {
+            activeInput.value = item.text + ' '; 
+            activeInput.focus();
+            fetchGoogleSuggestions(activeInput.value);
+            toggleIcons(activeInput.value);
+          }
+        });
+
+        suggestionsList.appendChild(div);
+      });
+    }
+
+    function toggleIcons(query) {
+      if (query.length > 0) {
+        emptyIcons.classList.add('hidden');
+        typingIcons.classList.remove('hidden');
+      } else {
+        emptyIcons.classList.remove('hidden');
+        typingIcons.classList.add('hidden');
+      }
+    }
+
+    document.getElementById('main-search-trigger').addEventListener('click', () => {
+      searchOverlay.classList.remove('hidden');
+      searchOverlay.classList.add('flex');
+      activeInput.value = mainDisplayInput.value;
+      activeInput.focus();
+      toggleIcons(activeInput.value);
+      activeInput.value ? fetchGoogleSuggestions(activeInput.value) : renderHistory();
+    });
+
+    document.getElementById('back-btn').addEventListener('click', () => {
+      searchOverlay.classList.add('hidden');
+      searchOverlay.classList.remove('flex');
+    });
+
+    clearBtn.addEventListener('click', () => {
+      activeInput.value = '';
+      activeInput.focus();
+      toggleIcons('');
+      renderHistory();
+    });
+
+    let timeoutId;
+    activeInput.addEventListener('input', (e) => {
+      const query = e.target.value;
+      toggleIcons(query);
+      
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => fetchGoogleSuggestions(query), 200); 
+    });
+
+  </script>
 </body>
 </html>
