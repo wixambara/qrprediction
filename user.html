@@ -152,7 +152,7 @@
     </footer>
   </div>
 
-  <!-- ==================== OVERLAY PENCARIAN (AUTOCOMPLETE) ==================== -->
+  <!-- ==================== OVERLAY PENCARIAN ==================== -->
   <div id="search-overlay" class="fixed inset-0 bg-white z-50 hidden flex-col w-full overflow-hidden">
     <div class="flex items-center px-2 py-2 border-b border-[#dfe1e5] shadow-sm">
       <button id="back-btn" type="button" class="p-2 text-[#5f6368] flex items-center justify-center rounded-full hover:bg-gray-100 flex-shrink-0">
@@ -240,7 +240,7 @@
              <button id="clear-console-btn" class="text-[10px] text-slate-500 hover:text-slate-800 font-semibold uppercase tracking-wider bg-slate-100 px-2 py-1 rounded transition-colors active:scale-95">Clear</button>
           </div>
           <div id="system-console" class="w-full h-32 bg-[#1e1e1e] text-[#4ade80] font-mono text-[11px] p-3 rounded-xl overflow-y-auto break-words shadow-inner leading-relaxed">
-              <!-- Logs rendered here -->
+              &gt; Init console...
           </div>
         </div>
 
@@ -249,7 +249,6 @@
             <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">QR Code Viewer (MyQROnline)</h3>
             <div class="flex flex-col items-center gap-3">
                 <div class="p-2 bg-white border border-slate-200 rounded-2xl shadow-sm inline-block">
-                    <!-- URL QR Code diambil langsung -->
                     <img id="target-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fmyqronline.vercel.app%2Fredirect.html" class="w-32 h-32 object-contain" alt="QR Code">
                 </div>
                 <button id="download-qr" class="text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 px-5 py-2.5 rounded-full uppercase tracking-widest active:scale-95 transition-transform flex items-center gap-1.5">
@@ -260,7 +259,6 @@
 
       </div>
       
-      <!-- Footer Button -->
       <div class="bg-white px-5 py-4 border-t border-slate-100 flex justify-end gap-3 sticky bottom-0">
         <button id="cancel-settings" class="px-5 py-2.5 text-[14px] font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Batal</button>
         <button id="save-settings" class="px-5 py-2.5 text-[14px] font-medium bg-[#0b57d0] text-white hover:bg-[#0842a0] rounded-xl transition-colors shadow-sm">Simpan</button>
@@ -274,9 +272,9 @@
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-    // Konfigurasi Firebase
+    // Firebase Config
     const firebaseConfig = {
-      apiKey: "AIzaSyCC96vqxrJ-TOuVJyMO9DVacibnkIOR6Cs",
+      apiKey: "AIzaSyBsdaCltUZPkg0kl7-BIY-xfbkTnypyfxM",
       authDomain: "qrpredictionwix.firebaseapp.com",
       databaseURL: "https://qrpredictionwix-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "qrpredictionwix",
@@ -289,9 +287,10 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // Kredensial AI & Default
-    const GEMINI_API_KEY = "AIzaSyDitL95w9e9cLx1K3WirSWZqIABtLcNSp0";
+    // GEMINI NEW API KEY (FROM USER)
+    const GEMINI_API_KEY = "AIzaSyCC96vqxrJ-TOuVJyMO9DVacibnkIOR6Cs";
     const DEFAULT_PROMPT = "lagu apa yang paling terkenal dari $searchKeyword? Jawab dengan direct tanpa penjelasan tambahan sedikitpun";
+    
     const STORAGE_KEY = 'google_clone_history';
     const CONSOLE_STORAGE_KEY = 'google_clone_console_logs';
     const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -346,12 +345,7 @@
     function logToConsole(message) {
       const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
       const formattedMessage = `<span class="text-slate-500">[${time}]</span> ${message}`;
-      
-      consoleLogs.push({
-        text: formattedMessage,
-        timestamp: Date.now()
-      });
-      
+      consoleLogs.push({ text: formattedMessage, timestamp: Date.now() });
       renderConsole();
     }
 
@@ -359,12 +353,11 @@
       consoleLogs = [];
       localStorage.removeItem(CONSOLE_STORAGE_KEY);
       renderConsole();
-      logToConsole("Console cleared.");
     });
 
     renderConsole();
 
-    // --- LOGIKA STATUS & AUTH FIREBASE ---
+    // --- FIREBASE AUTH & CONN ---
     function setIndicator(status) {
       connIndicator.className = 'w-2.5 h-2.5 rounded-full transition-colors duration-300';
       if (status === 'online') connIndicator.classList.add('bg-green-500');
@@ -372,57 +365,55 @@
       else if (status === 'loading') connIndicator.classList.add('bg-yellow-400', 'pulse-dot');
     }
 
-    logToConsole("Initializing Firebase Auth...");
+    logToConsole("Firebase: Attempting sign-in...");
     setIndicator('loading');
+    
+    // Auth Bypass: Jika Auth Error, sistem tetap lanjut (hanya log di console)
     signInAnonymously(auth).then(() => {
-      logToConsole("Firebase Auth: Success");
+      logToConsole("Firebase Auth: Success.");
     }).catch((e) => {
-      logToConsole(`<span class="text-red-400">Firebase Auth Error: ${e.message}</span>`);
+      logToConsole(`<span class="text-red-400">Firebase Auth Error: ${e.code} - ${e.message}</span>`);
+      logToConsole(`<span class="text-yellow-400">Auth Bypass Enabled: Proving trick even without login.</span>`);
       liveStatus.textContent = "Offline (Autentikasi Gagal)";
       setIndicator('offline');
     });
 
     onAuthStateChanged(auth, (user) => {
-      if (user) {
         onValue(ref(db, '.info/connected'), (snap) => {
           if (snap.val() === true) {
             isFirebaseConnected = true;
             setIndicator('online');
             liveStatus.textContent = "Terhubung secara real-time";
-            logToConsole("Database: Connected to Realtime DB.");
+            logToConsole("Database: Online.");
           } else {
             isFirebaseConnected = false;
             setIndicator('offline');
             liveStatus.textContent = "Terputus";
-            logToConsole(`<span class="text-red-400">Database: Disconnected.</span>`);
+            logToConsole(`<span class="text-red-400">Database: Offline.</span>`);
           }
         });
-      }
     });
 
-    // --- DOWNLOAD QR CODE LOGIC ---
+    // --- DOWNLOAD QR ---
     downloadQrBtn.addEventListener('click', async () => {
       try {
-        logToConsole("Downloading QR Code...");
+        logToConsole("Downloading QR...");
         const response = await fetch(qrImg.src);
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.style.display = 'none';
         a.href = url;
-        a.download = 'MyQROnline_Target.png';
+        a.download = 'Magic_QR_Target.png';
         document.body.appendChild(a);
         a.click();
-        window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        logToConsole("QR Code downloaded successfully.");
+        logToConsole("QR downloaded.");
       } catch (err) {
-        logToConsole(`<span class="text-yellow-400">Download failed, opening in new tab...</span>`);
         window.open(qrImg.src, '_blank');
       }
     });
 
-    // --- SETTING MODAL & MASKING EDITOR ---
+    // --- SETTING MODAL ---
     function updateSiteUI(site) {
       selectedSite = site;
       siteBtns.forEach(btn => {
@@ -443,9 +434,7 @@
     function getPromptString() {
       let clone = promptEditor.cloneNode(true);
       let pills = clone.querySelectorAll('.keyword-pill');
-      pills.forEach(p => {
-        p.parentNode.replaceChild(document.createTextNode('$searchKeyword'), p);
-      });
+      pills.forEach(p => p.parentNode.replaceChild(document.createTextNode('$searchKeyword'), p));
       return clone.innerText.replace(/\u00a0/g, ' ').trim(); 
     }
 
@@ -458,27 +447,8 @@
     insertKeywordBtn.addEventListener('click', (e) => {
       e.preventDefault();
       const pillHTML = `&nbsp;<span contenteditable="false" class="keyword-pill inline-flex items-center bg-blue-100 text-[#0b57d0] px-1.5 py-[2px] rounded font-semibold text-[13px] mx-1 align-baseline select-none pointer-events-none">kata kunci</span>&nbsp;`;
-      
       promptEditor.focus();
-      if (window.getSelection && window.getSelection().getRangeAt) {
-        let range = window.getSelection().getRangeAt(0);
-        if (promptEditor.contains(range.commonAncestorContainer)) {
-          let el = document.createElement('div');
-          el.innerHTML = pillHTML;
-          let frag = document.createDocumentFragment(), node, lastNode;
-          while ( (node = el.firstChild) ) { lastNode = frag.appendChild(node); }
-          range.insertNode(frag);
-          if (lastNode) {
-            range = range.cloneRange();
-            range.setStartAfter(lastNode);
-            range.collapse(true);
-            window.getSelection().removeAllRanges();
-            window.getSelection().addRange(range);
-          }
-          return;
-        }
-      }
-      promptEditor.insertAdjacentHTML('beforeend', pillHTML);
+      document.execCommand('insertHTML', false, pillHTML);
     });
 
     siteBtns.forEach(btn => btn.onclick = () => updateSiteUI(btn.getAttribute('data-site')));
@@ -497,52 +467,41 @@
         updateSiteUI(selectedSite);
         settingsModal.classList.remove('hidden');
         settingsModal.classList.add('flex');
-        logToConsole("Settings Modal opened via triple click.");
+        logToConsole("Settings opened.");
       }
     });
-
-    function closeSettingsModal() {
-      settingsModal.classList.add('hidden');
-      settingsModal.classList.remove('flex');
-    }
 
     document.getElementById('save-settings').addEventListener('click', () => {
       currentAIPrompt = getPromptString() || DEFAULT_PROMPT;
       localStorage.setItem('google_clone_ai_prompt', currentAIPrompt);
       localStorage.setItem('google_clone_target_site', selectedSite);
-      logToConsole(`Settings saved. Target Site: ${selectedSite}`);
-      closeSettingsModal();
+      logToConsole(`Settings saved. Site: ${selectedSite}`);
+      settingsModal.classList.add('hidden');
+      settingsModal.classList.remove('flex');
     });
 
-    document.getElementById('cancel-settings').addEventListener('click', closeSettingsModal);
-    document.getElementById('closeSettingsModal').addEventListener('click', closeSettingsModal);
+    document.getElementById('cancel-settings').addEventListener('click', () => {
+        settingsModal.classList.add('hidden');
+        settingsModal.classList.remove('flex');
+    });
+    document.getElementById('closeSettingsModal').addEventListener('click', () => {
+        settingsModal.classList.add('hidden');
+        settingsModal.classList.remove('flex');
+    });
 
-    // --- LOGIKA PENCARIAN, FIREBASE & GEMINI API ---
-    function saveToHistory(query) {
-      if (!query.trim()) return;
-      searchHistory = searchHistory.filter(item => item !== query); 
-      searchHistory.unshift(query); 
-      if (searchHistory.length > 15) searchHistory.pop(); 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(searchHistory));
-    }
-
+    // --- AI & SEARCH EXECUTION ---
     async function fetchGeminiAPI(query) {
-      logToConsole(`Sending "${query}" to Gemini API...`);
-      
-      // Amankan final prompt jika query kosong (meski jarang terjadi)
+      logToConsole(`Gemini: Processing "${query}"...`);
       let finalPrompt = currentAIPrompt.replace(/\$searchKeyword/g, query);
-      if(!finalPrompt.trim()) finalPrompt = query; 
+      if(!finalPrompt.trim()) finalPrompt = query;
 
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-        
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            systemInstruction: {
-              parts: [{ text: "Berikan HANYA jawaban akhir yang singkat dan langsung. DILARANG KERAS menyertakan proses berpikir (thinking process), penjelasan, atau teks tambahan apa pun." }]
-            },
+            systemInstruction: { parts: [{ text: "Berikan HANYA jawaban akhir singkat tanpa penjelasan tambahan apa pun." }] },
             contents: [{ parts: [{ text: finalPrompt }] }],
             generationConfig: { temperature: 0.1 }
           })
@@ -550,66 +509,52 @@
         
         const data = await response.json();
         
-        // Pengecekan Error Kuat
+        // Handle Error & Fallback to 1.5
         if (data.error) {
-          logToConsole(`<span class="text-red-400">API Error: ${data.error.message}</span>`);
-          
-          // AUTO-FALLBACK: Jika model 2.5 tidak rilis/tidak ditemukan di API key ini, coba pakai 1.5 flash
-          if(data.error.message.toLowerCase().includes('not found') || data.error.message.toLowerCase().includes('model')) {
-             logToConsole(`<span class="text-yellow-400">Mencoba auto-fallback ke model gemini-1.5-flash...</span>`);
-             const urlFallback = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-             
-             const fallbackResponse = await fetch(urlFallback, {
+          logToConsole(`<span class="text-red-400">Gemini Error: ${data.error.message}</span>`);
+          if(data.error.message.toLowerCase().includes('not found')) {
+             logToConsole(`<span class="text-yellow-400">Trying fallback: gemini-1.5-flash...</span>`);
+             const urlF = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+             const resF = await fetch(urlF, {
                method: 'POST',
                headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ 
-                 systemInstruction: { parts: [{ text: "Jawab langsung singkat." }] },
-                 contents: [{ parts: [{ text: finalPrompt }] }],
-                 generationConfig: { temperature: 0.1 }
-               })
+               body: JSON.stringify({ contents: [{ parts: [{ text: finalPrompt }] }], generationConfig: { temperature: 0.1 } })
              });
-             
-             const fallbackData = await fallbackResponse.json();
-             if(fallbackData.candidates && fallbackData.candidates[0].content.parts[0].text) {
-                let text = fallbackData.candidates[0].content.parts[0].text.trim();
-                text = text.replace(/^["']|["']$/g, '');
-                logToConsole(`Fallback Success: "${text}"`);
-                return text;
+             const dataF = await resF.json();
+             if(dataF.candidates?.[0]?.content?.parts?.[0]?.text) {
+                return dataF.candidates[0].content.parts[0].text.trim().replace(/^["']|["']$/g, '');
              }
           }
           return null;
         }
 
-        // Parsing Respons Normal
-        if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
-          let text = data.candidates[0].content.parts[0].text.trim();
-          if (text.toLowerCase().includes("thinking process")) {
-            const lines = text.split('\n').filter(l => l.trim() !== '');
-            text = lines[lines.length - 1]; 
+        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+          let t = data.candidates[0].content.parts[0].text.trim();
+          if (t.toLowerCase().includes("thinking process")) {
+            const lines = t.split('\n').filter(l => l.trim() !== '');
+            t = lines[lines.length - 1]; 
           }
-          text = text.replace(/^["']|["']$/g, '');
-          logToConsole(`Gemini API Success: "${text}"`);
-          return text.trim();
+          logToConsole(`Gemini: Result received.`);
+          return t.replace(/^["']|["']$/g, '');
         }
-        
-        logToConsole(`<span class="text-red-400">Gemini Error: Format JSON tidak sesuai dugaan. ${JSON.stringify(data).substring(0, 50)}...</span>`);
         return null;
-      } catch (error) {
-        logToConsole(`<span class="text-red-400">Gemini Fetch Exception: ${error.message}</span>`);
+      } catch (e) {
+        logToConsole(`<span class="text-red-400">Fetch Exception: ${e.message}</span>`);
         return null; 
       }
     }
 
     async function executeSearch(query) {
-      saveToHistory(query);
-      logToConsole(`Executing search for: "${query}"`);
+      if (!query.trim()) return;
+      logToConsole(`Search sequence initiated.`);
       
-      // Tampilkan UI Loading
       activeInput.blur(); 
       aiLoadingScreen.classList.remove('hidden');
       aiLoadingScreen.classList.add('flex');
 
-      // Tentukan URL Tujuan
+      let aiResponse = await fetchGeminiAPI(query);
+      if (!aiResponse) aiResponse = query;
+
       const siteURLs = {
         google: `https://www.google.com/search?q=`,
         tokopedia: `https://www.tokopedia.com/search?st=product&q=`,
@@ -617,61 +562,43 @@
       };
       const targetUrl = siteURLs[selectedSite] + encodeURIComponent(query);
 
-      // Jalankan AI Call
-      let aiResponse = await fetchGeminiAPI(query);
-      if (!aiResponse) {
-        aiResponse = query; // Fallback jika gagal agar trik tetep jalan
-        logToConsole(`<span class="text-yellow-400">Using fallback (original query) instead of AI response.</span>`);
-      }
-      
-      if (isFirebaseConnected) {
-        try {
-          logToConsole("Syncing to Firebase DB...");
-          const firebaseTask = Promise.all([
+      // Smart Syncing
+      logToConsole("Firebase: Syncing data...");
+      try {
+          const syncTask = Promise.all([
             set(ref(db, 'predictions/input'), aiResponse),
             set(ref(db, 'predictions/site'), selectedSite)
           ]);
           
           const timeoutTask = new Promise((resolve) => setTimeout(resolve, 2500, 'timeout'));
-          const raceResult = await Promise.race([firebaseTask, timeoutTask]);
+          const res = await Promise.race([syncTask, timeoutTask]);
           
-          if (raceResult === 'timeout') {
-             logToConsole(`<span class="text-yellow-400">Warning: Firebase write timed out. Forcing redirect.</span>`);
-          } else {
-             logToConsole("Firebase Sync Complete. Redirecting...");
-          }
-          
+          if(res === 'timeout') logToConsole(`<span class="text-yellow-400">Sync Timeout. Redirecting now.</span>`);
+          else logToConsole("Sync Success. Redirecting...");
+
           window.location.href = targetUrl;
-        } catch (error) {
-          logToConsole(`<span class="text-red-400">Firebase DB Write Error: ${error.message}</span>`);
-          window.location.href = targetUrl; 
-        }
-      } else {
-        logToConsole(`<span class="text-yellow-400">Firebase offline. Redirecting immediately.</span>`);
-        window.location.href = targetUrl;
+      } catch (err) {
+          logToConsole(`<span class="text-red-400">Sync Error. Redirecting regardless.</span>`);
+          window.location.href = targetUrl;
       }
     }
 
     searchForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      if (activeInput.value.trim() !== '') {
-        executeSearch(activeInput.value);
-      }
+      executeSearch(activeInput.value);
     });
 
-    // --- AUTOCOMPLETE LOGIC ---
+    // --- AUTOCOMPLETE ---
     function fetchGoogleSuggestions(query) {
       if (!query.trim()) { renderHistory(); return; }
       const script = document.createElement('script');
-      const callbackName = 'googleSuggestCb_' + Date.now();
-      window[callbackName] = function(data) {
-        const suggestions = data[1] || [];
-        const items = suggestions.map(text => ({ text: text, type: 'search' }));
-        renderListHTML(items, query);
-        delete window[callbackName];
+      const cb = 'googleSuggestCb_' + Date.now();
+      window[cb] = function(data) {
+        renderListHTML((data[1] || []).map(text => ({ text, type: 'search' })), query);
+        delete window[cb];
         script.remove();
       };
-      script.src = `https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}&callback=${callbackName}`;
+      script.src = `https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}&callback=${cb}`;
       document.body.appendChild(script);
     }
 
@@ -684,31 +611,20 @@
       items.forEach(item => {
         const div = document.createElement('div');
         div.className = 'flex items-center px-4 py-[14px] active:bg-gray-100 cursor-pointer min-w-0 w-full';
-
         const leftIcon = item.type === 'history' ? 'schedule' : 'search';
-        let formattedText = item.text;
-        
+        let txt = item.text;
         if (currentQuery && item.text.toLowerCase().startsWith(currentQuery.toLowerCase()) && item.type === 'search') {
-          const matchedPart = item.text.substring(0, currentQuery.length);
-          const suggestedPart = item.text.substring(currentQuery.length);
-          formattedText = `<span>${matchedPart}</span><span class="font-bold">${suggestedPart}</span>`;
-        } else if (item.type === 'search') {
-          formattedText = `<span class="font-bold">${item.text}</span>`;
-        }
-
-        const rightIcon = item.type === 'history' ? 'close' : 'north_west';
+          txt = `<span>${item.text.substring(0, currentQuery.length)}</span><span class="font-bold">${item.text.substring(currentQuery.length)}</span>`;
+        } else if (item.type === 'search') txt = `<span class="font-bold">${item.text}</span>`;
 
         div.innerHTML = `
           <span class="material-symbols-outlined text-[#9aa0a6] text-[22px] mr-4 flex-shrink-0">${leftIcon}</span>
-          <span class="flex-grow text-[16px] text-[#202124] pr-4 line-clamp-2 min-w-0 truncate">${formattedText}</span>
-          <span class="material-symbols-outlined text-[#9aa0a6] text-[22px] ml-2 cursor-pointer hover:text-gray-700 right-action-btn flex-shrink-0">
-            ${rightIcon}
-          </span>
+          <span class="flex-grow text-[16px] text-[#202124] pr-4 line-clamp-2 min-w-0 truncate">${txt}</span>
+          <span class="material-symbols-outlined text-[#9aa0a6] text-[22px] ml-2 right-action-btn flex-shrink-0">${item.type === 'history' ? 'close' : 'north_west'}</span>
         `;
         
-        div.querySelector('.flex-grow').addEventListener('click', () => executeSearch(item.text));
-
-        div.querySelector('.right-action-btn').addEventListener('click', (e) => {
+        div.querySelector('.flex-grow').onclick = () => executeSearch(item.text);
+        div.querySelector('.right-action-btn').onclick = (e) => {
           e.stopPropagation();
           if (item.type === 'history') {
             searchHistory = searchHistory.filter(i => i !== item.text);
@@ -720,51 +636,38 @@
             fetchGoogleSuggestions(activeInput.value);
             toggleIcons(activeInput.value);
           }
-        });
-
+        };
         suggestionsList.appendChild(div);
       });
     }
 
-    function toggleIcons(query) {
-      if (query.length > 0) {
-        emptyIcons.classList.add('hidden');
-        typingIcons.classList.remove('hidden');
-      } else {
-        emptyIcons.classList.remove('hidden');
-        typingIcons.classList.add('hidden');
-      }
+    function toggleIcons(q) {
+      if (q.length > 0) { emptyIcons.classList.add('hidden'); typingIcons.classList.remove('hidden'); }
+      else { emptyIcons.classList.remove('hidden'); typingIcons.classList.add('hidden'); }
     }
 
-    document.getElementById('main-search-trigger').addEventListener('click', () => {
+    document.getElementById('main-search-trigger').onclick = () => {
       searchOverlay.classList.remove('hidden');
       searchOverlay.classList.add('flex');
       activeInput.value = mainDisplayInput.value;
       activeInput.focus();
       toggleIcons(activeInput.value);
       activeInput.value ? fetchGoogleSuggestions(activeInput.value) : renderHistory();
-    });
+    };
 
-    document.getElementById('back-btn').addEventListener('click', () => {
+    document.getElementById('back-btn').onclick = () => {
       searchOverlay.classList.add('hidden');
       searchOverlay.classList.remove('flex');
-    });
+    };
 
-    clearBtn.addEventListener('click', () => {
-      activeInput.value = '';
-      activeInput.focus();
-      toggleIcons('');
-      renderHistory();
-    });
+    clearBtn.onclick = () => { activeInput.value = ''; activeInput.focus(); toggleIcons(''); renderHistory(); };
 
     let timeoutId;
-    activeInput.addEventListener('input', (e) => {
-      const query = e.target.value;
-      toggleIcons(query);
-      
+    activeInput.oninput = (e) => {
+      toggleIcons(e.target.value);
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => fetchGoogleSuggestions(query), 200); 
-    });
+      timeoutId = setTimeout(() => fetchGoogleSuggestions(e.target.value), 200); 
+    };
 
   </script>
 </body>
