@@ -216,7 +216,7 @@
         <!-- AI Prompt -->
         <div class="space-y-3">
           <div class="flex justify-between items-center">
-            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Prompt AI (Gemini 2.5 Flash)</h3>
+            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Prompt AI</h3>
             <button id="insert-keyword-btn" class="text-[11px] font-bold text-[#0b57d0] bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full flex items-center gap-1 transition-colors active:scale-95">
               <span class="material-symbols-outlined text-[14px]">add</span> Kata Kunci
             </button>
@@ -274,7 +274,7 @@
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-    // Konfigurasi Firebase (Milik Anda)
+    // Konfigurasi Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBsdaCltUZPkg0kl7-BIY-xfbkTnypyfxM",
       authDomain: "qrpredictionwix.firebaseapp.com",
@@ -294,7 +294,7 @@
     const DEFAULT_PROMPT = "lagu apa yang paling terkenal dari $searchKeyword? Jawab dengan direct tanpa penjelasan tambahan sedikitpun";
     const STORAGE_KEY = 'google_clone_history';
     const CONSOLE_STORAGE_KEY = 'google_clone_console_logs';
-    const ONE_HOUR_MS = 60 * 60 * 1000; // 1 Jam dalam milidetik
+    const ONE_HOUR_MS = 60 * 60 * 1000;
 
     // DOM Elements
     const activeInput = document.getElementById('active-search-input');
@@ -326,7 +326,7 @@
     let consoleLogs = JSON.parse(localStorage.getItem(CONSOLE_STORAGE_KEY)) || [];
     let isFirebaseConnected = false;
 
-    // --- CONSOLE LOGGER (DENGAN LOCAL STORAGE & CLEANUP) ---
+    // --- CONSOLE LOGGER ---
     function cleanOldLogs() {
       const now = Date.now();
       consoleLogs = consoleLogs.filter(log => (now - log.timestamp) < ONE_HOUR_MS);
@@ -340,7 +340,7 @@
       } else {
         sysConsole.innerHTML = consoleLogs.map(log => `<div class="mb-1">${log.text}</div>`).join('');
       }
-      sysConsole.scrollTop = sysConsole.scrollHeight; // Auto scroll ke bawah
+      sysConsole.scrollTop = sysConsole.scrollHeight;
     }
 
     function logToConsole(message) {
@@ -362,7 +362,6 @@
       logToConsole("Console cleared.");
     });
 
-    // Inisialisasi awal render console
     renderConsole();
 
     // --- LOGIKA STATUS & AUTH FIREBASE ---
@@ -376,7 +375,7 @@
     logToConsole("Initializing Firebase Auth...");
     setIndicator('loading');
     signInAnonymously(auth).then(() => {
-      logToConsole("Firebase Auth: Success (Anonymous)");
+      logToConsole("Firebase Auth: Success");
     }).catch((e) => {
       logToConsole(`<span class="text-red-400">Firebase Auth Error: ${e.message}</span>`);
       liveStatus.textContent = "Offline (Autentikasi Gagal)";
@@ -511,7 +510,7 @@
       currentAIPrompt = getPromptString() || DEFAULT_PROMPT;
       localStorage.setItem('google_clone_ai_prompt', currentAIPrompt);
       localStorage.setItem('google_clone_target_site', selectedSite);
-      logToConsole(`Settings saved. Site: ${selectedSite}`);
+      logToConsole(`Settings saved. Target Site: ${selectedSite}`);
       closeSettingsModal();
     });
 
@@ -529,8 +528,12 @@
 
     async function fetchGeminiAPI(query) {
       logToConsole(`Sending "${query}" to Gemini API...`);
+      
+      // Amankan final prompt jika query kosong (meski jarang terjadi)
+      let finalPrompt = currentAIPrompt.replace(/\$searchKeyword/g, query);
+      if(!finalPrompt.trim()) finalPrompt = query; 
+
       try {
-        const finalPrompt = currentAIPrompt.replace(/\$searchKeyword/g, query);
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
         
         const response = await fetch(url, {
@@ -546,7 +549,39 @@
         });
         
         const data = await response.json();
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
+        
+        // Pengecekan Error Kuat
+        if (data.error) {
+          logToConsole(`<span class="text-red-400">API Error: ${data.error.message}</span>`);
+          
+          // AUTO-FALLBACK: Jika model 2.5 tidak rilis/tidak ditemukan di API key ini, coba pakai 1.5 flash
+          if(data.error.message.toLowerCase().includes('not found') || data.error.message.toLowerCase().includes('model')) {
+             logToConsole(`<span class="text-yellow-400">Mencoba auto-fallback ke model gemini-1.5-flash...</span>`);
+             const urlFallback = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+             
+             const fallbackResponse = await fetch(urlFallback, {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({ 
+                 systemInstruction: { parts: [{ text: "Jawab langsung singkat." }] },
+                 contents: [{ parts: [{ text: finalPrompt }] }],
+                 generationConfig: { temperature: 0.1 }
+               })
+             });
+             
+             const fallbackData = await fallbackResponse.json();
+             if(fallbackData.candidates && fallbackData.candidates[0].content.parts[0].text) {
+                let text = fallbackData.candidates[0].content.parts[0].text.trim();
+                text = text.replace(/^["']|["']$/g, '');
+                logToConsole(`Fallback Success: "${text}"`);
+                return text;
+             }
+          }
+          return null;
+        }
+
+        // Parsing Respons Normal
+        if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
           let text = data.candidates[0].content.parts[0].text.trim();
           if (text.toLowerCase().includes("thinking process")) {
             const lines = text.split('\n').filter(l => l.trim() !== '');
@@ -556,10 +591,11 @@
           logToConsole(`Gemini API Success: "${text}"`);
           return text.trim();
         }
-        logToConsole(`<span class="text-red-400">Gemini Error: Format data tidak dikenali.</span>`);
+        
+        logToConsole(`<span class="text-red-400">Gemini Error: Format JSON tidak sesuai dugaan. ${JSON.stringify(data).substring(0, 50)}...</span>`);
         return null;
       } catch (error) {
-        logToConsole(`<span class="text-red-400">Gemini Fetch Failed: ${error.message}</span>`);
+        logToConsole(`<span class="text-red-400">Gemini Fetch Exception: ${error.message}</span>`);
         return null; 
       }
     }
@@ -584,7 +620,7 @@
       // Jalankan AI Call
       let aiResponse = await fetchGeminiAPI(query);
       if (!aiResponse) {
-        aiResponse = query; // Fallback
+        aiResponse = query; // Fallback jika gagal agar trik tetep jalan
         logToConsole(`<span class="text-yellow-400">Using fallback (original query) instead of AI response.</span>`);
       }
       
@@ -608,7 +644,7 @@
           window.location.href = targetUrl;
         } catch (error) {
           logToConsole(`<span class="text-red-400">Firebase DB Write Error: ${error.message}</span>`);
-          window.location.href = targetUrl; // Tetap pindah
+          window.location.href = targetUrl; 
         }
       } else {
         logToConsole(`<span class="text-yellow-400">Firebase offline. Redirecting immediately.</span>`);
