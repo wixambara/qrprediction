@@ -156,7 +156,6 @@
       </button>
       
       <form id="search-form" action="#" class="flex-grow mx-2 flex items-center min-w-0">
-        <!-- Input aktif dengan autocapitalize none agar huruf pertama tetap kecil -->
         <input id="active-search-input" name="q" type="text" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" class="w-full text-[16px] text-[#202124] focus:outline-none bg-transparent" />
       </form>
       
@@ -183,7 +182,6 @@
   <div id="ai-loading-screen" class="fixed inset-0 bg-white z-[200] hidden flex-col justify-center items-center">
     <!-- Spinner Khas Google -->
     <div class="w-10 h-10 border-[3px] border-[#f3f3f3] border-t-[#1a73e8] rounded-full animate-spin mb-4"></div>
-    <!-- Teks searching dengan titik-titik animasi -->
     <p class="text-[#5f6368] text-[15px] font-medium tracking-wide">
       searching<span class="dot-1">.</span><span class="dot-2">.</span><span class="dot-3">.</span>
     </p>
@@ -220,8 +218,6 @@
               <span class="material-symbols-outlined text-[14px]">add</span> Kata Kunci
             </button>
           </div>
-          
-          <!-- Editor ContentEditable untuk Masking -->
           <div id="ai-prompt-input" contenteditable="true" class="w-full min-h-[110px] border border-slate-200 rounded-xl p-3 text-[14px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0b57d0] focus:border-transparent leading-relaxed bg-slate-50 break-words whitespace-pre-wrap"></div>
         </div>
 
@@ -236,7 +232,6 @@
 
       </div>
       
-      <!-- Footer Button -->
       <div class="bg-white px-5 py-4 border-t border-slate-100 flex justify-end gap-3 sticky bottom-0">
         <button id="cancel-settings" class="px-5 py-2.5 text-[14px] font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Batal</button>
         <button id="save-settings" class="px-5 py-2.5 text-[14px] font-medium bg-[#0b57d0] text-white hover:bg-[#0842a0] rounded-xl transition-colors shadow-sm">Simpan</button>
@@ -269,10 +264,9 @@
     const GEMINI_API_KEY = "AIzaSyDitL95w9e9cLx1K3WirSWZqIABtLcNSp0";
     const DEFAULT_PROMPT = "lagu apa yang paling terkenal dari $searchKeyword? Jawab dengan direct tanpa penjelasan tambahan sedikitpun";
 
-    // Deklarasi Konstanta
     const STORAGE_KEY = 'google_clone_history';
 
-    // DOM Elements Utama
+    // DOM Elements
     const activeInput = document.getElementById('active-search-input');
     const mainDisplayInput = document.getElementById('main-display-input');
     const searchOverlay = document.getElementById('search-overlay');
@@ -283,7 +277,6 @@
     const typingIcons = document.getElementById('typing-icons');
     const aiLoadingScreen = document.getElementById('ai-loading-screen'); 
     
-    // DOM Elements Modal Settings
     const labsIconBtn = document.getElementById('labs-icon-btn');
     const settingsModal = document.getElementById('ai-settings-modal');
     const promptEditor = document.getElementById('ai-prompt-input');
@@ -292,13 +285,13 @@
     const connIndicator = document.getElementById('connIndicator');
     const liveStatus = document.getElementById('live-status');
 
-    // Inisialisasi State
+    // State
     let currentAIPrompt = localStorage.getItem('google_clone_ai_prompt') || DEFAULT_PROMPT;
     let selectedSite = localStorage.getItem('google_clone_target_site') || 'google';
     let searchHistory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let isFirebaseConnected = false;
 
-    // --- LOGIKA STATUS & AUTH FIREBASE ---
+    // --- STATUS & AUTH FIREBASE ---
     function setIndicator(status) {
       connIndicator.className = 'w-2.5 h-2.5 rounded-full transition-colors duration-300';
       if (status === 'online') connIndicator.classList.add('bg-green-500');
@@ -328,7 +321,7 @@
       }
     });
 
-    // --- LOGIKA SETTING MODAL & EDITOR MASKING ---
+    // --- SETTING MODAL & MASKING EDITOR ---
     function updateSiteUI(site) {
       selectedSite = site;
       siteBtns.forEach(btn => {
@@ -421,7 +414,7 @@
     document.getElementById('cancel-settings').addEventListener('click', closeSettingsModal);
     document.getElementById('closeSettingsModal').addEventListener('click', closeSettingsModal);
 
-    // --- LOGIKA PENCARIAN, FIREBASE & GEMINI API ---
+    // --- LOGIKA PENCARIAN & SMART REDIRECT ---
     function saveToHistory(query) {
       if (!query.trim()) return;
       searchHistory = searchHistory.filter(item => item !== query); 
@@ -450,56 +443,69 @@
         const data = await response.json();
         if (data.candidates && data.candidates[0].content.parts[0].text) {
           let text = data.candidates[0].content.parts[0].text.trim();
-          
           if (text.toLowerCase().includes("thinking process")) {
             const lines = text.split('\n').filter(l => l.trim() !== '');
             text = lines[lines.length - 1]; 
           }
-          
           text = text.replace(/^["']|["']$/g, '');
           return text.trim();
         }
-        return "Tidak ada respons dari AI.";
+        return null;
       } catch (error) {
-        return "Gagal terhubung ke AI.";
+        return null; 
       }
     }
 
     async function executeSearch(query) {
       saveToHistory(query);
       
-      // Tampilkan Layar Loading Penuh
+      // Tampilkan UI Loading
       activeInput.blur(); 
       aiLoadingScreen.classList.remove('hidden');
       aiLoadingScreen.classList.add('flex');
 
-      // Jalankan AI Call terlebih dahulu
-      const aiResponse = await fetchGeminiAPI(query);
-      
-      // Susun Janji (Promises) Firebase (Menghindari Race Condition)
-      const firebaseTasks = [];
-      if(isFirebaseConnected) {
-        // OVERWRITE input asli dengan aiResponse
-        firebaseTasks.push(set(ref(db, 'predictions/input'), aiResponse));
-        firebaseTasks.push(set(ref(db, 'predictions/site'), selectedSite));
-      }
-
-      // Tunggu hingga SEMUA proses penulisan Firebase tuntas
-      if(firebaseTasks.length > 0) {
-        await Promise.all(firebaseTasks).catch(e => console.error("Gagal simpan ke DB:", e));
-      }
-
-      // Tentukan Dinamis URL Redirect sesuai Pengaturan
+      // Tentukan URL Tujuan
       const siteURLs = {
         google: `https://www.google.com/search?q=`,
         tokopedia: `https://www.tokopedia.com/search?st=product&q=`,
         imdb: `https://www.imdb.com/find/?q=`
       };
-      
       const targetUrl = siteURLs[selectedSite] + encodeURIComponent(query);
+
+      // Jalankan AI Call
+      let aiResponse = await fetchGeminiAPI(query);
+      if (!aiResponse) {
+        aiResponse = query; // Fallback ke kata kunci asli jika AI gagal
+      }
       
-      // Lakukan Redirect setelah semua proses aman
-      window.location.href = targetUrl;
+      if (isFirebaseConnected) {
+        try {
+          // SMART REDIRECT: Buat Promise yang akan resolve JIKA Firebase selesai menyinkronkan data ke server
+          const firebaseTask = Promise.all([
+            set(ref(db, 'predictions/input'), aiResponse),
+            set(ref(db, 'predictions/site'), selectedSite)
+          ]);
+          
+          // SAFETY NET: Buat Timer batas maksimal (2.5 detik)
+          const timeoutTask = new Promise((resolve) => setTimeout(resolve, 2500, 'timeout'));
+          
+          // Lomba/Race: Siapa yang selesai lebih dulu (Firebase vs Timeout)
+          const raceResult = await Promise.race([firebaseTask, timeoutTask]);
+          
+          if (raceResult === 'timeout') {
+             console.warn("Internet lambat: Force redirect.");
+          }
+          
+          // Redirect seketika setelah server menerima atau timeout tercapai (tanpa hard delay)
+          window.location.href = targetUrl;
+        } catch (error) {
+          console.error("Gagal sinkronisasi DB:", error);
+          window.location.href = targetUrl; // Tetap pindah halaman walau error
+        }
+      } else {
+        // Jika status offline, langsung redirect tanpa menunggu
+        window.location.href = targetUrl;
+      }
     }
 
     searchForm.addEventListener('submit', (e) => {
